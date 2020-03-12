@@ -18,41 +18,38 @@ In addition to what's in Anaconda, this lecture will need the following librarie
   !pip install --upgrade quantecon
   !pip install interpolation
 
+
 Overview
 ========
 
-Next, we study an optimal savings problem for an infinitely lived consumer---the "common ancestor" described in :cite:`Ljungqvist2012`, section 1.3.
+In this lecture, we continue our study of the income fluctuation problem initiated in
+:doc:`ifp`.
 
-This is an essential sub-problem for many representative macroeconomic models
+There we considered a relatively simple version of the problem.
 
-* :cite:`Aiyagari1994`
+In this lecture, we introduce two significant extensions.
 
-* :cite:`Huggett1993`
+First, returns on assets are allowed to be stochastic.
 
-* etc.
+Second the discount factor of the agent is allowed to vary with the state.
 
-It is related to the decision problem in the :doc:`stochastic optimal growth
-model <optgrowth>` and yet differs in important ways.
+The first modification makes our model more realistic in terms of content and
+predictions.
 
-For example, the choice problem for the agent includes an additive income term that leads to an occasionally binding constraint.
+The second modification brings our model into line with much of the current
+literature, such as 
 
-Our presentation of the model will be relatively brief.
+In addition to these generalizations of the income fluctuation problem, we also 
+introduce an alternative method for solving such problems computationally.
 
-.. only:: html
+This method is sometimes called **time iteration** and involves iterating on
+the Euler equation.
 
-    * For further details on economic intuition, implication and models, see :cite:`Ljungqvist2012`.
-    * Proofs of all mathematical results stated below can be found in :download:`this paper <_static/lecture_specific/ifp/pi2.pdf>`.
+(We use similar ideas to solve :doc:`the optimal growth model<coleman_policy_iter>`.)
 
-.. only:: latex
+This method can be shown to be globally convergent under mild assumptions, even when utility is unbounded (both above and below).
 
-    * For further details on economic intuition, implication and models, see :cite:`Ljungqvist2012`.
-    * Proofs of all mathematical results stated below can be found in `this paper <https://lectures.quantecon.org/_downloads/pi2.pdf>`__.
-
-To solve the model we will use Euler equation based time iteration, similar to :doc:`this lecture <coleman_policy_iter>`.
-
-This method turns out to be globally convergent under mild assumptions, even when utility is unbounded (both above and below).
-
-We'll need the following imports:
+We will make use of the following imports:
 
 .. code-block:: ipython
 
@@ -64,11 +61,6 @@ We'll need the following imports:
     %matplotlib inline
     from quantecon import MarkovChain
 
-
-References
-----------
-
-Other useful references include :cite:`Deaton1991`, :cite:`DenHaan2010`, :cite:`Kuhn2013`, :cite:`Rabault2002`,  :cite:`Reiter2009`  and :cite:`SchechtmanEscudero1977`.
 
 
 
