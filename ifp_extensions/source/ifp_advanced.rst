@@ -40,13 +40,12 @@ The second modification allows us to encompass recent quantitative work using he
   :cite:`cao2016existence`, :cite:`hubmer2018comprehensive` and
   :cite:`hills2018fiscal`.
 
-In addition to these generalizations of the income fluctuation problem, we also introduce an alternative method for solving such problems computationally.
-
-This method is sometimes called **time iteration** and involves iterating on the Euler equation.
+We use **time iteration** to solve the model, which involves iterating on the Euler equation.
 
 (In one of our lectures, we use similar ideas to solve :doc:`the optimal growth model <coleman_policy_iter>`.)
 
-This method can be shown to be globally convergent under mild assumptions, even when utility is unbounded (both above and below).
+This method is numerically stable and can be shown to be globally convergent
+under mild assumptions, even when utility is unbounded.
 
 We will make use of the following imports:
 
@@ -94,9 +93,7 @@ with initial condition :math:`(a_0, Z_0)=(a,z)` treated as given.
 
 Note that 
 
-* :math:`\{R_t\}_{t \geq 1}`, the gross rate of return on wealth,
-is allowed to be stochastic.
-
+* :math:`\{R_t\}_{t \geq 1}`, the gross rate of return on wealth, is allowed to be stochastic.
 * the constant discount factor :math:`\beta` has been replaced by a discount factor process :math:`\{\beta_t\}_{t \geq 0}`  with :math:`\beta_0=1`. 
 
 The sequence :math:`\{Y_t \}_{t \geq 1}` is non-financial income. 
@@ -113,13 +110,11 @@ The stochastic components of the problem obey
 
 where
 
-* the maps :math:`\beta`, :math:`R` and :math:`Y` are time-invariant, nonnegative Borel-measurable functions and 
-
+* the maps :math:`\beta`, :math:`R` and :math:`Y` are time-invariant, nonnegative Borel-measurable functions,
+* the innovation processes :math:`\{\epsilon_t\}`, :math:`\{\zeta_t\}` and :math:`\{\eta_t\}` are IID and independent of each other, and
 * :math:`\{Z_t\}_{t \geq 0}` is an irreducible time-homogeneous Markov chain on a finite set :math:`\mathsf Z`  
 
-Let :math:`P(z, \hat z)` represent the probability of this exogenous state process transitioning from :math:`z` to :math:`\hat z` in one step.
-
-The innovation processes :math:`\{\epsilon_t\}`, :math:`\{\zeta_t\}` and :math:`\{\eta_t\}` are IID and independent of each other.
+Let :math:`P(z, \hat z)` represent the probability of the exogenous state process :math:`\{Z_t\}_{t \geq 0}` transitioning from :math:`z` to :math:`\hat z` in one step.
 
 The utility function :math:`u` maps :math:`\mathbb R+` to :math:`\{ - \infty \} \cup \mathbb R`, is twice differentiable on :math:`(0, \infty)`, satisfies :math:`u' > 0` and :math:`u'' < 0` everywhere
 on :math:`(0, \infty)`, and that :math:`u'(c) \to \infty` as :math:`c \to 0` and :math:`u'(c) < 1`
@@ -152,7 +147,10 @@ We assume in all of what follows that the discount factor process satisfies
 
 This assumption turns out to be the most natural extension of the standard condition :math:`\beta < 1` from the constant discount case.  
 
-(You can easily confirm that :math:`G_\beta = \beta` in that non-stochastic setting.)
+You can easily confirm that 
+
+* :math:`G_\beta = \beta` in that non-stochastic setting and, more generally,
+* :math:`G_\beta = \mathbb E \beta_t` if :math:`\{ \beta_t \}` is IID.
 
 We also need to ensure that the present discounted value of wealth
 does not grow too quickly. 
@@ -184,7 +182,7 @@ See :cite:`ma2020income` for more details on the assumptions given above.
 Optimality
 ----------
 
-The state space for :math:`\{(a_t, Z_t) \}_{t \geq 0}` is taken to be :math:`\mathbb S:= (0, \infty) \times \mathsf Z`.
+Let :math:`\mathbb S:= (0, \infty) \times \mathsf Z`.
 
 A **feasible policy** is a Borel measurable function 
 :math:`c \colon \mathbb S \to \mathbb R` with :math:`0 \leq c(a,z) \leq a` for all 
@@ -236,7 +234,7 @@ Let :math:`\mathscr C` be the space of continuous functions :math:`c \colon \mat
 
 The following is proved in :cite:`ma2020income`:
 
-**Theorem.** If :math:`c \in \mathscr C` and the first order optimality condition holds, then :math:`c` is an optimal policy.
+**Optimality Theorem.** If :math:`c \in \mathscr C` and the first order optimality condition holds, then :math:`c` is an optimal policy.
 
 Now our task is to find a feasible policy satisfying the first order
 optimality condition.
@@ -271,6 +269,14 @@ function :math:`Kc` at :math:`(a,z)` is defined as the :math:`\xi \in (0,a]` tha
     :label: k_opr
 
 
+The idea behind :math:`K` is that, as can be seen from the definitions, :math:`c \in \mathscr C` satisfies the
+first order optimality condition if and only if :math:`Kc(a, z) = c(a, z)` for
+all :math:`(a, z) \in \mathbb S`.
+
+In view of the optimality theorem stated above, this means that any fixed
+point of :math:`K` in :math:`\mathscr C` is optimal.
+
+
 
 Convergence Properties
 ----------------------
@@ -302,7 +308,6 @@ In fact, it can be shown that
    the unique optimal policy in :math:`\mathscr C`.
 
 See :cite:`ma2020income`  for details.
-
 
 We now have a clear path to successfully approximating the optimal policy:
 choose some :math:`c \in \mathscr C` and then iterate with :math:`K` until
