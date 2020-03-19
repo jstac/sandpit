@@ -526,29 +526,114 @@ taking a ``CakeEating`` instance as input.
 Euler Equation
 ==============
 
-The Euler equation in this cake eating problem:
+We have shown a numerical method to completely solve the cake eating problem. In this section, we will
+show you that a little more math helps us understand the intertemporal trade-offs of consumptions analytically.
+
+We will show you two ways of deriving the optimality conditions.
+
+First, we focus on the original optimization problem and maximize the discounted sum of utilities using Lagrange multiplier.
+
+Define the Lagrangian function as
 
 .. math::
 
-    u^{\prime}\left(c_{t}\right)=\beta u^{\prime}\left(c_{t+1}\right)
+    \mathcal{L}=\sum_{t=0}^{\infty}\beta^{t}\left(u\left(c_{t}\right)+\lambda_{t}\left(x_{t}-c_{t}-x_{t+1}\right)\right)
 
-Therefore, if we denote $\sigma\left(a\right)$ as the optimal policy function, it must satisfy the following functional equation:
+Taking first derivatives with respect to two sequences of control variables :math:`\{c_t\}_{t=0}^{\infty}` and
+:math:`\{x_{t+1}\}_{t=0}^{\infty}`, we have
 
 .. math::
-    u^{\prime}\circ\sigma\left(y\right)=\beta u^{\prime}\left(y-\sigma\left(y\right)\right)
+
+    u^{\prime}\left(c_{t}\right)-\lambda_{t}=0 \quad \text{for all} \ t \\
+    \lambda_{t}-\beta\lambda_{t+1}=0 \quad \text{for all} \ t
+
+when the consumptions are optimal. Combining these two first order conditions together gives us the
+following equation for optimal consumptions today and tomorrow
+
+.. math::
+    :label: euler
+
+    u^{\prime}\left(c^*_{t}\right)=\beta u^{\prime}\left(c^*_{t+1}\right)
+
+which is what we call *Euler function*. Intuitively, this suggests that if :math:`\{c^*_t\}_{t=0}^{\infty}` is the optimal
+consumption sequence, then the marginal utility of consuming *one more unit* of cake today equals to the discounted
+marginal utility of consuming *one more unit* of cake tomorrow.
+
+The other way of deriving the Euler equation is to use the Bellman equation :eq:`bellman`. Since the Bellman equation is recursive,
+we can focus on finding the optimal :math:`c_t^*` given :math:`x_t` instead of finding :math:`\{c^*_t\}_{t=0}^{\infty}` as a whole.
+
+Taking first derivative with respect to :math:`c_t`, we get
+
+.. math::
+    :label: bellman_FOC
+
+    u^{\prime}\left(c_{t}\right)=\beta V^{\prime}\left(x_{t+1}\right).
+
+To know what :math:`V^{\prime}\left(x_{t+1}\right)` is, we first define the right hand side of the Bellman equation
+as :math:`f\left(c_t,x_t\right)` and therefore
+
+.. math::
+    :label: bellman_equality
+
+    V\left(x_{t}\right) = f\left(c_{t}^{*},x_{t}\right)
+
+Taking differential on both sides of :eq:`bellman_equality` at :math:`c_t=c_t^*`, we have
+
+.. math::
+    dV\left(x_{t}\right) = df\left(c_{t},x_{t}\right)\bigg|_{c_{t}=c_{t}^{*}}
+    =\left(\frac{\partial f\left(c_{t},x_{t}\right)}{\partial c_{t}}dc_{t}+\frac{\partial f\left(c_{t},x_{t}\right)}{\partial x_{t}}dx_{t}\right)\bigg|_{c_{t}=c_{t}^{*}}
+
+Note that :math:`f\left(c_{t},x_{t}\right)` is maximized at :math:`c^*_t`, which implies :math:`\frac{\partial f\left(c_{t},x_{t}\right)}{\partial c_{t}}\big|_{c_{t}=c_{t}^{*}}=0` and
+
+.. math::
+    
+    dV\left(x_{t}\right)=\frac{\partial f\left(c_{t},x_{t}\right)}{\partial x_{t}}dx_{t}=\beta V^{\prime}\left(x_{t+1}\right)dx_{t}
+
+which is a result of *Envelope Theorem*. Dividing both sides by :math:`dx_{t}` gives us
+
+.. math::
+    :label: bellman_envelope
+
+    V^{\prime}\left(x_{t}\right)=\beta V^{\prime}\left(x_{t+1}\right)
+
+We can substitute :math:`\beta V^{\prime}\left(x_{t+1}\right)` in :eq:`bellman_FOC` using :eq:`bellman_envelope`,
+
+.. math::
+    :label: bellman_v_prime
+
+    u^{\prime}\left(c_{t}\right)=V^{\prime}\left(x_{t}\right)
+
+and we can derive the Euler equation again using :eq:`bellman_v_prime` and :eq:`bellman_FOC`.
+
+It is interesting to observe the connection between methods of Lagrange multiplier and Bellman equation, which is
+
+.. math::
+    
+    V^{\prime}\left(x_{t}\right)=\lambda_{t}
+
+This will be much more clear if we think about the intuition behind these two terms: they both represent
+the change in the optimal value of the objective function due to the relaxation of a given constraint (in this
+case, it is one additional unit of cake for free). :math:`\lambda_{t}` is usually referred to as *shadow price*
+in economics or *costate variable* in control theory.
+
+Euler equation is the optimality condition and can be used to solve the model. Let's denote :math:`\sigma\left(a\right)`
+as the optimal policy function. It must satisfy the following functional equation:
+
+.. math::
+    u^{\prime}\circ\sigma\left(x\right)=\beta u^{\prime}\left(x-\sigma\left(x\right)\right)
 
 or equivalently
 
 .. math::
-    \sigma\left(y\right)=u^{\prime-1}\left(\beta u^{\prime}\left(y-\sigma\left(y\right)\right)\right)
+    \sigma\left(x\right)=u^{\prime-1}\left(\beta u^{\prime}\left(x-\sigma\left(x\right)\right)\right)
 
-Computationally, we can start with any initial guess of :math:`\sigma\left(a\right)` and apply the following policy function operator
+Computationally, we can start with any initial guess of :math:`\sigma\left(x\right)` and apply the following policy function operator
 :math:`K` repeatedly until it converges,
 
 .. math::
-    \sigma_{k+1}\left(y\right)=K\sigma_{k}\left(y\right)=\min\left\{ u^{\prime-1}\left(\beta u^{\prime}\left(y-\sigma_{k}\left(y\right)\right)\right),y\right\}
+    \sigma_{k+1}\left(x\right)=K\sigma_{k}\left(x\right)=\min\left\{ u^{\prime-1}\left(\beta u^{\prime}\left(x-\sigma_{k}\left(x\right)\right)\right),x\right\}
 
-Notice that in each iteration we make sure the consumption is no more than the state :math:`y`.
+Note that in each iteration we make sure the consumption is no more than the state :math:`x`.
 
 .. code-block:: python3
 
