@@ -53,10 +53,10 @@ The Model
 
 We operating on a infinite time horizon :math:`t=0, 1, 2, 3..`
 
-At :math:`t=0` the agent is given a complete cake with size :math:`\bar y`.
+At :math:`t=0` the agent is given a complete cake with size :math:`\bar x`.
 
-Let :math:`y_t` denote the size of the cake at the beginning of each period,
-so that, in particular, :math:`y_0=\bar y`.
+Let :math:`x_t` denote the size of the cake at the beginning of each period,
+so that, in particular, :math:`x_0=\bar x`.
 
 We choose how much of the cake to eat in any given period :math:`t`.
 
@@ -76,7 +76,7 @@ We adopt the CRRA utility function
 After choosing to consume :math:`c_t` of the cake in period :math:`t` there is
 
 .. math::
-    y_{t+1} = y_t - c_t 
+    x_{t+1} = x_t - c_t 
 
 left in period :math:`t+1`.
 
@@ -92,16 +92,16 @@ The agent's problem can be written as
 subject to
 
 .. math::
-    y_{t+1} = y_t - c_t 
+    x_{t+1} = x_t - c_t 
     \quad \text{and} \quad
-    0\leq c_t\leq y_t
+    0\leq c_t\leq x_t
     :label: cake_feasible
 
 for all :math:`t`.
 
 
 A consumption path :math:`\{c_t\}` satisfying :eq:`cake_feasible` where
-:math:`y_0 = \bar y` is called **feasible**.
+:math:`x_0 = \bar x` is called **feasible**.
 
 
 Trade-Off
@@ -155,17 +155,17 @@ The next step is to use it to calculate the solution.
 The Bellman Equation
 --------------------
 
-To this end, we let :math:`v(y)` be maximum lifetime utility attainable from
-the current time when :math:`y` units of cake are left.
+To this end, we let :math:`v(x)` be maximum lifetime utility attainable from
+the current time when :math:`x` units of cake are left.
 
 That is,
 
 .. math::
-    v(y) = \max \sum_{t=0}^{\infty} \beta^t u(c_t) 
+    v(x) = \max \sum_{t=0}^{\infty} \beta^t u(c_t) 
     :label: value_fun
 
 where the maximization is over all paths :math:`\{ c_t \}` that are feasible
-from :math:`y_0 = y`.
+from :math:`x_0 = x`.
 
 At this point, we do not have an expression for :math:`v`, but we can still
 make inferences about it.
@@ -178,25 +178,25 @@ In the present case, this equation states that :math:`v` satisfies
 .. math::
     :label: bellman
 
-    v(y) = \max_{0\leq c \leq y} \{u(c) + \beta v(y-c)\}
-    \quad \text{for any given } y \geq 0.
+    v(x) = \max_{0\leq c \leq x} \{u(c) + \beta v(x-c)\}
+    \quad \text{for any given } x \geq 0.
 
 The intuition here is essentially the same it was for the McCall model.
 
-Suppose that the current size of the cake is :math:`y`.
+Suppose that the current size of the cake is :math:`x`.
 
 choosing :math:`c` optimally means trading off current vs future rewards.
 
 Current rewards from choice :math:`c` are just :math:`u(c)`.
 
-Future rewards, assuming optimal behavior, are :math:`v(y-c)`.
+Future rewards, assuming optimal behavior, are :math:`v(x-c)`.
 
 These are the two terms on the right hand side of :eq:`bellman`, after discounting.
 
 If :math:`c` is chosen optimally using this strategy, then we obtain maximal
 lifetime rewards from our current state :math:`y`.
 
-Hence, :math:`v(y)` equals the right hand side of :eq:`bellman`, as claimed.
+Hence, :math:`v(x)` equals the right hand side of :eq:`bellman`, as claimed.
 
 
 
@@ -211,12 +211,12 @@ The function defined below computes the analytical solution of a given ``CakeEat
     def v_star(ce):
 
         β, γ = ce.β, ce.γ
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
         u = ce.u
 
         a = β ** (1 / γ)
         x = 1 - a
-        z = u(y_grid)
+        z = u(x_grid)
 
         return z / x ** γ
 
@@ -228,7 +228,7 @@ The function defined below computes the analytical solution of a given ``CakeEat
 
     fig, ax = plt.subplots()
 
-    ax.plot(y_grid, v_analytical, label='value function')
+    ax.plot(x_grid, v_analytical, label='value function')
     ax.set_ylabel('$v(x)$', fontsize=12)
     ax.set_xlabel('$x$', fontsize=12)
     ax.legend()
@@ -242,7 +242,7 @@ The function defined below computes the analytical solution of a given ``CakeEat
 The analytical optimal policy function in this cake eating problem is
 
 .. math::
-    c^* = \left(1-\beta^\frac{1}{\gamma}\right)y
+    c^* = \left(1-\beta^\frac{1}{\gamma}\right)x
 
 
 .. code-block:: python3
@@ -250,19 +250,19 @@ The analytical optimal policy function in this cake eating problem is
     def c_star(ce):
 
         β, γ = ce.β, ce.γ
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
 
-        return (1 - β ** (1/γ)) * y_grid
+        return (1 - β ** (1/γ)) * x_grid
 
 
 .. code-block:: python3
 
     fig, ax = plt.subplots()
 
-    ax.plot(ce.y_grid, c_analytical, label='Analytical')
-    ax.plot(ce.y_grid, c, label='Numerical')
-    ax.set_ylabel('$\sigma(y)$')
-    ax.set_xlabel('$y$')
+    ax.plot(ce.x_grid, c_analytical, label='Analytical')
+    ax.plot(ce.x_grid, c, label='Numerical')
+    ax.set_ylabel('$\sigma(x)$')
+    ax.set_xlabel('$x$')
     ax.legend()
     ax.set_title('Comparison between analytical and numerical optimal policies')
     plt.show()
@@ -391,7 +391,7 @@ Exercises
 Exercise 1
 ------------
 
-Prove that the optimal policy function is linear and there exists an postive :math:`\theta` such that :math:`c_t^*=\theta y_t`
+Prove that the optimal policy function is linear and there exists an postive :math:`\theta` such that :math:`c_t^*=\theta x_t`
 
 
 (might change this to verify the value function above is the value function?)
@@ -412,55 +412,55 @@ Solutions
 Exercise 1
 -----------
 
-Suppose that the optimal policy is :math:`c_t^*=\theta y_t`
+Suppose that the optimal policy is :math:`c_t^*=\theta x_t`
 
 then
 
 .. math::
-    y_{t+1}=y_t(1-\theta)
+    x_{t+1}=x_t(1-\theta)
 
 which means
 
 .. math::
-    y_t = y_{0}(1-\theta)^t
+    x_t = x_{0}(1-\theta)^t
 
 
 Thus the optimal value function is.
 
 .. math::
-    v^*(y_0) = \sum_{t=0}^{\infty} \beta^{t} u(c_t)\\
-    v^*(y_0) = \sum_{t=0}^{\infty} \beta^{t} u(\theta y_{t})\\
-    v^*(y_0) = \sum_{t=0}^{\infty} \beta^{t} u\left(\theta y_{0}(1-\theta)^t\right)\\
-    v^*(y_0) = \sum_{t=0}^{\infty} \theta^{1-\gamma}\beta^{t} (1-\theta)^{t(1-\gamma)}u(y_{0})\\
-    v^*(y_0) = \frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}u(y_{0})
+    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u(c_t)\\
+    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u(\theta x_{t})\\
+    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u\left(\theta x_{0}(1-\theta)^t\right)\\
+    v^*(x_0) = \sum_{t=0}^{\infty} \theta^{1-\gamma}\beta^{t} (1-\theta)^{t(1-\gamma)}u(x_{0})\\
+    v^*(x_0) = \frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}u(x_{0})
 
 
 Now with the optimal form of the value funciton we can impliment it in to the bellman equation.
 
 .. math::
-    v(y) = \max_{0\leq c\leq y}
+    v(x) = \max_{0\leq c\leq x}
         \left\{
             u(c) + 
-            \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot u(y-c)
+            \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot u(x-c)
         \right\}\\
-    v(y) = \max_{0\leq c\leq y}
+    v(x) = \max_{0\leq c\leq x}
     \left\{
         \frac{c^{1-\gamma}}{1-\gamma} + 
-        \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot\frac{(y-c)^{1-\gamma}}{1-\gamma}
+        \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot\frac{(x-c)^{1-\gamma}}{1-\gamma}
     \right\}
 
 
 taking the F.O.C we have
 
 .. math::
-    c^{-\gamma} + \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(y-c)^{-\gamma}(-1) = 0\\
-    c^{-\gamma} = \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(y-c)^{-\gamma}
+    c^{-\gamma} + \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x-c)^{-\gamma}(-1) = 0\\
+    c^{-\gamma} = \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x-c)^{-\gamma}
 
 
-with :math:`c = \theta y` we get
+with :math:`c = \theta x` we get
 
 .. math::
-    \left(\theta y\right)^{-\gamma} =  \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(y(1-\theta))^{-
+    \left(\theta x\right)^{-\gamma} =  \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x(1-\theta))^{-
     \gamma}
 
 With some re-arrangment we get
@@ -472,37 +472,37 @@ With some re-arrangment we get
 this gives the optimal policy of
 
 .. math::
-    c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)y_t
+    c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)x_t
 
 
 substituting :math:`\theta` into the value function above gives.
 
 .. math::
-    v^*(y_t) = \frac{\left(1-\beta^{\frac{1}{\gamma}}\right)^{1-\gamma}}{1-\beta\left(\beta^{\frac{{1-\gamma}}{\gamma}}\right)}u(y_{t})\\
+    v^*(x_t) = \frac{\left(1-\beta^{\frac{1}{\gamma}}\right)^{1-\gamma}}{1-\beta\left(\beta^{\frac{{1-\gamma}}{\gamma}}\right)}u(x_{t})\\
 
 
 .. math::
-    v^*(y_t) = \left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(y_t)
+    v^*(x_t) = \left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(x_t)
 
 
 Now we must verify that this value function is a fixed point, using the bellman equation.
 
 .. math::
-    v(y) = \max_{0\leq c\leq y}
+    v(x) = \max_{0\leq c\leq x}
         \left\{
             u(c) +
-            \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(y-c)
+            \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(x-c)
         \right\}\\
 
 taking the F.O.C we have
 
 .. math::
-    c^{-\gamma} - \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}(y-c)^{-\gamma} = 0
+    c^{-\gamma} - \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}(x-c)^{-\gamma} = 0
 
 Rearranging gives
 
 .. math::
-    c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)y_t
+    c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)x_t
 
 
 
