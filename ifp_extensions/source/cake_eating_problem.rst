@@ -48,9 +48,9 @@ The Model
 
 We are operating on a infinite time horizen :math:`t=0,1,2,3...`
 
-At :math:`t=0` the agent is given the perfect cake with size :math:`\bar{y}`, this is exogenously given.
+At :math:`t=0` the agent is given the perfect cake with size :math:`\bar{x}`, this is exogenously given.
 
-At the beginning of each period the size of the cake is :math:`y_t`, with :math:`y_0=\bar{y}`.
+At the beginning of each period the size of the cake is :math:`x_t`, with :math:`x_0=\bar{x}`.
 
 
 We are asked to choose how much of the cake to eat in any given period :math:`t`.
@@ -74,7 +74,7 @@ After choosing to consumed :math:`c_t` of the cake in period :math:`t` there is
 
 .. math::
 
-    y_{t+1} = y_t - c_t \ \text{for all}\ t
+    x_{t+1} = x_t - c_t \ \text{for all}\ t
 
 
 
@@ -92,9 +92,9 @@ subject to
 
 .. math::
 
-    y_{t+1} = y_t - c_t \ \text{for all}\ t\text{,}\\
-    0\leq c_t\leq y_t\ \text{for all}\ t\text{,}\\
-    y_0=\bar{y}\text{.}
+    x_{t+1} = x_t - c_t \ \text{for all}\ t\text{,}\\
+    0\leq c_t\leq x_t\ \text{for all}\ t\text{,}\\
+    x_0=\bar{x}\text{.}
 
 
 Trade-Off
@@ -105,19 +105,19 @@ Our agent is faced with two trade-offs:
 
 Value Function
 ==============
-Let :math:`v(y_0)` be the value function, which is the discounted sum of lifetime utility of agents when following the optimal consumption :math:`\{c_t\}_{t = 0}^{\infty}` for a given :math:`y_0`. Mathematically, it is defined as
+Let :math:`v(x_0)` be the value function, which is the discounted sum of lifetime utility of agents when following the optimal consumption :math:`\{c_t\}_{t = 0}^{\infty}` for a given :math:`x_0`. Mathematically, it is defined as
 
 .. math::
     :label: value_fun
 
-    v(y_0) = \max_{\{c_t\}_{t = 0}^{\infty}} \sum_{t=0}^{\infty} \beta^t u(c_t) \\
+    v(x_0) = \max_{\{c_t\}_{t = 0}^{\infty}} \sum_{t=0}^{\infty} \beta^t u(c_t) \\
 
 subject to
 
 .. math::
     :label: conditions
 
-    0\leq c_{t}\leq y_{t} \quad \text{and} \quad y_{t+1} = y_{t} - c{t} \ \text{for all}\ t
+    0\leq c_{t}\leq x_{t} \quad \text{and} \quad x_{t+1} = x_{t} - c{t} \ \text{for all}\ t
 
 
 Breaking :eq:`value_fun` down in terms of the two trade-offs gives
@@ -125,7 +125,7 @@ Breaking :eq:`value_fun` down in terms of the two trade-offs gives
 .. math::
     :label: tra_value_fun
 
-    v(y_0) = \max_{c_0}
+    v(x_0) = \max_{c_0}
         \left\{
             u(c_0) + 
             \beta\max_{\{c_t\}_{t = 1}^{\infty}} \sum_{t=1}^{\infty} \beta^{t-1} u(c_t)
@@ -134,30 +134,30 @@ Breaking :eq:`value_fun` down in terms of the two trade-offs gives
 The Bellman Equation
 --------------------
 
-Notice that :eq:`tra_value_fun` is recursive if we replace :math:`\max_{\{c_t\}_{t = 1}^{\infty}}\sum_{t=1}^{\infty} \beta^{t-1} u(c_t)` with :math:`v(y_1)`
+Notice that :eq:`tra_value_fun` is recursive if we replace :math:`\max_{\{c_t\}_{t = 1}^{\infty}}\sum_{t=1}^{\infty} \beta^{t-1} u(c_t)` with :math:`v(x_1)`
 
 .. math::
     :label: bellman
 
-    v(y_0) = \max_{0\leq c_0\leq y_0}\{u(c_0) + \beta v(y_1)\}
+    v(x_0) = \max_{0\leq c_0\leq x_0}\{u(c_0) + \beta v(x_1)\}
 
 :eq:`bellman` is what we call Bellman equation. More generally, this is true for any time :math:`t`
 
 .. math::
-    v(y_t) = \max_{0\leq c_t\leq y_t}\{u(c_t) + \beta v(y_{t+1})\}
+    v(x_t) = \max_{0\leq c_t\leq x_t}\{u(c_t) + \beta v(x_{t+1})\}
 
-The law of motion for the state variable :math:`y_t` is
+The law of motion for the state variable :math:`x_t` is
 
 .. math::
     :label: state_tran
 
-    y_{t+1} = y_t - c_t \ \text{for all}\ t
+    x_{t+1} = x_t - c_t \ \text{for all}\ t
 
 Computationally, we will define a Bellman operator :math:`T` as in the previous dynamic programming lectures to solve for `v`.
 
 .. math::
 
-    Tv(y) = \max_{0 \leq c \leq y}\{u(c) + \beta v(y')\}
+    Tv(x) = \max_{0 \leq c \leq x}\{u(c) + \beta v(x')\}
 
 By contraction mapping theorem, given any intial guess of :math:`v`, this operation will converge to a unique fixed point, which is
 the correct solution.
@@ -167,7 +167,7 @@ Incorporating the transition law of the state variable :eq:`state_tran` into the
 .. math::
     :label: bellman_val
 
-    Tv(y) = \max_{0 \leq c \leq y}\{u(c) + \beta v(y - c)\}
+    Tv(x) = \max_{0 \leq c \leq x}\{u(c) + \beta v(x - c)\}
 
 
 
@@ -180,22 +180,22 @@ In order to determine the value function we need to:
 #. Plug :math:`v'` into the right hand side of :eq:`bellman_val`, find and store :math:`c` and :math:`v`.
 #. Unless a condition is met, set :math:`v'=v` and go back to step 2.
 
-As consumption choice :math:`c` is a continous variable, the state variable :math:`y` is continous. This makes things tricky.
+As consumption choice :math:`c` is a continous variable, the state variable :math:`x` is continous. This makes things tricky.
 
-In order to determine :math:`v` we have to store :math:`v(y)` for every :math:`y\in [0,\bar{y}]`, which is difficult given there are infinitly many points.
+In order to determine :math:`v` we have to store :math:`v(x)` for every :math:`x\in [0,\bar{x}]`, which is difficult given there are infinitly many points.
 
-To get around this we'll create a finite grid of different size cakes :math:`\bar{y}=y_0>y_1>y_2>...y_I>0` and determine the :math:`v` for each point on the grid and store them.
+To get around this we'll create a finite grid of different size cakes :math:`\bar{x}=x_0>x_1>x_2>...x_I>0` and determine the :math:`v` for each point on the grid and store them.
 
 The process looks like:
 
 #. Begin with an array of values :math:`\{ v_0, \ldots, v_I \}`  representing
-   the values of some initial function :math:`v` on the grid points :math:`\{ y_0, \ldots, y_I \}`.
+   the values of some initial function :math:`v` on the grid points :math:`\{ x_0, \ldots, x_I \}`.
 #. Build a function :math:`\hat v` on the state space :math:`\mathbb R_+` by
    linear interpolation, based on these data points.
-#. Obtain and record the value :math:`T \hat v(y_i)` on each grid point
-   :math:`y_i` by repeatedly solving.
+#. Obtain and record the value :math:`T \hat v(x_i)` on each grid point
+   :math:`x_i` by repeatedly solving.
 #. Unless some stopping condition is satisfied, set
-   :math:`\{ v_0, \ldots, v_I \} = \{ T \hat v(y_0), \ldots, T \hat v(y_I) \}` and go to step 2.
+   :math:`\{ v_0, \ldots, v_I \} = \{ T \hat v(x_0), \ldots, T \hat v(x_I) \}` and go to step 2.
 
 In step 2 we'll use the same continuous piecewise linear interpolation strategy as is the previous :doc:`lecture <mccall_fitted_vfi>`
 
@@ -236,13 +236,13 @@ This class will also have a function which returns the right hand right of the b
         def __init__(self,
                      β=0.96,         # discount factor
                      γ=0.5,          # degree of relative risk aversion
-                     y_grid_max=10,  # inital stock of capital Y
-                     y_grid_size=120):
+                     x_grid_max=10,  # inital stock of capital x
+                     x_grid_size=120):
 
             self.β, self.γ = β, γ
 
             # Set up grid
-            self.y_grid = np.linspace(1e-04, y_grid_max, y_grid_size)
+            self.x_grid = np.linspace(1e-04, x_grid_max, x_grid_size)
 
         # Utility function
         def u(self, c):
@@ -264,16 +264,16 @@ This class will also have a function which returns the right hand right of the b
 
             return  u_prime ** (- 1 / self.γ)
 
-        def state_action_value(self, c, y, v_array):
+        def state_action_value(self, c, x, v_array):
             """
-            Right hand side of the Bellman equation given y and c.
+            Right hand side of the Bellman equation given x and c.
             """
 
             u, β = self.u, self.β
 
-            v_func = lambda y: interp(self.y_grid, v_array, y)
+            v_func = lambda x: interp(self.x_grid, v_array, x)
 
-            return u(c) + β * v_func(y - c)
+            return u(c) + β * v_func(x - c)
 
 
 We now define ``T`` which implement the Bellman operation and update the value at each grid point.
@@ -290,10 +290,10 @@ We now define ``T`` which implement the Bellman operation and update the value a
         """
         v_new = np.empty_like(v)
 
-        for i in range(len(ce.y_grid)):
-            y = ce.y_grid[i]
-            # Maximize RHS of Bellman equation at state y
-            v_new[i] = maximize(ce.state_action_value, 1e-10, y, (y, v))[1]
+        for i in range(len(ce.x_grid)):
+            x = ce.x_grid[i]
+            # Maximize RHS of Bellman equation at state x
+            v_new[i] = maximize(ce.state_action_value, 1e-10, x, (x, v))[1]
 
         return v_new
 
@@ -305,28 +305,28 @@ Let's start with creating a ``CakeEating`` instance using default parameterizati
     ce = CakeEating()
 
 Now let's see the iteration of the value function in action. We choose an intial guess whose value
-is :math:`0` for every :math:`y` grid point. 
+is :math:`0` for every :math:`x` grid point. 
 
 We should see that the value functions converge to a fixed point as we apply Bellman operations.
 
 .. code-block:: python3
 
-    y_grid = ce.y_grid
-    v = np.zeros(len(y_grid))  # Initial guess
+    x_grid = ce.x_grid
+    v = np.zeros(len(x_grid))  # Initial guess
     n = 35                     # Number of iterations
 
     fig, ax = plt.subplots()
 
-    ax.plot(y_grid, v, color=plt.cm.jet(0),
+    ax.plot(x_grid, v, color=plt.cm.jet(0),
             lw=2, alpha=0.6, label='Initial guess')
 
     for i in range(n):
         v = T(ce, v)  # Apply the Bellman operator
-        ax.plot(y_grid, v, color=plt.cm.jet(i / n), lw=2, alpha=0.6)
+        ax.plot(x_grid, v, color=plt.cm.jet(i / n), lw=2, alpha=0.6)
 
     ax.legend()
-    ax.set_ylabel('$v(y)$', fontsize=12)
-    ax.set_xlabel('$y$', fontsize=12)
+    ax.set_ylabel('$v(x)$', fontsize=12)
+    ax.set_xlabel('$x$', fontsize=12)
     ax.set_title('Value function iterations')
 
     plt.show()
@@ -343,7 +343,7 @@ until some convergence conditions are satisfied and then return a converged valu
                                print_skip=25):
 
         # Set up loop
-        v = np.zeros(len(ce.y_grid)) # Initial guess
+        v = np.zeros(len(ce.x_grid)) # Initial guess
         v_new = np.empty_like(v)
         i = 0
         error = tol + 1
@@ -377,9 +377,9 @@ Now we can plot and see what the converged value function looks like.
 
     fig, ax = plt.subplots()
 
-    ax.plot(y_grid, v, label='Approximate value function')
-    ax.set_ylabel('$V(y)$', fontsize=12)
-    ax.set_xlabel('$y$', fontsize=12)
+    ax.plot(x_grid, v, label='Approximate value function')
+    ax.set_ylabel('$V(x)$', fontsize=12)
+    ax.set_xlabel('$x$', fontsize=12)
     ax.set_title('Value function')
     ax.legend()
     plt.show()
@@ -395,7 +395,7 @@ solution is to the analytical solution.
 The analytical solution for the value function is:
 
 .. math::
-    v^*(y) = \left(1-\beta^{\frac{1}{\gamma}}\right)^{-\gamma}u(y)
+    v^*(x) = \left(1-\beta^{\frac{1}{\gamma}}\right)^{-\gamma}u(x)
 
 We leave the proof as an exercise for the reader.
 
@@ -406,12 +406,12 @@ The function defined below computes the analytical solution of a given ``CakeEat
     def v_star(ce):
 
         β, γ = ce.β, ce.γ
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
         u = ce.u
 
         a = β ** (1 / γ)
         x = 1 - a
-        z = u(y_grid)
+        z = u(x_grid)
 
         return z / x ** γ
 
@@ -423,10 +423,10 @@ The function defined below computes the analytical solution of a given ``CakeEat
 
     fig, ax = plt.subplots()
 
-    ax.plot(y_grid, v_analytical, label='Analytical value function')
-    ax.plot(y_grid, v, label='Numerical value function')
-    ax.set_ylabel('$V(y)$', fontsize=12)
-    ax.set_xlabel('$y$', fontsize=12)
+    ax.plot(x_grid, v_analytical, label='Analytical value function')
+    ax.plot(x_grid, v, label='Numerical value function')
+    ax.set_ylabel('$V(x)$', fontsize=12)
+    ax.set_xlabel('$x$', fontsize=12)
     ax.legend()
     ax.set_title('Comparison between analytical and numerical value functions')
     plt.show()
@@ -437,14 +437,15 @@ Policy Function
 ===============
 
 Now that we have the solution of the value function it is straightforward for us to bakc out the optimal consumption
-sequence :math:`\{c_t\}_{t = 0}^{\infty}` given the initial size of the cake :math:`y_0`.
+sequence :math:`\{c_t\}_{t = 0}^{\infty}` given the initial size of the cake :math:`x_0`.
 
 As we have seen before, the Bellman equation is recursive and the optimal consumption at each time :math:`t` only
-depends on the current state :math:`y_t`. The one-to-one mapping which determines the optimal consumption
-:math:`c^*_t` given :math:`y_t` is often referred to as the agents' optimal policy function :math:`\sigma`.
+depends on the current state :math:`x_t`. The one-to-one mapping which determines the optimal consumption
+:math:`\sigma^*(x_t)` is often referred to as the agents' optimal policy function and belongs to :math:`\sigma \in \Sigma`, 
+where :math:`\Sigma` is the set of all feasible consumption policies.
 
 .. math::
-    c^*_t = \sigma(y_t) = \arg \max_{c_t} \{u(c_t) + \beta v(y_t - c_t)\}
+    \sigma^*(x_t) = \arg \max_{\sigma_t} \{u(c_t) + \beta v(x_t - \sigma_t)\}
 
 Below we implement the optimal policy function. It is very similar with the Bellman operator ``T``, while this time
 we focus on the optimal consumptions instead of updating values.
@@ -462,10 +463,10 @@ we focus on the optimal consumptions instead of updating values.
         """
         c = np.empty_like(v)
 
-        for i in range(len(ce.y_grid)):
-            y = ce.y_grid[i]
-            # Maximize RHS of Bellman equation at state y
-            c[i] = maximize(ce.state_action_value, 1e-10, y, (y, v))[0]
+        for i in range(len(ce.x_grid)):
+            x = ce.x_grid[i]
+            # Maximize RHS of Bellman equation at state x
+            c[i] = maximize(ce.state_action_value, 1e-10, x, (x, v))[0]
 
         return c
 
@@ -479,13 +480,14 @@ Let's pass the converged value function array we got before to ``σ`` and comput
 
     fig, ax = plt.subplots()
 
-    ax.plot(y_grid, c)
-    ax.set_ylabel('$\sigma(y)$')
-    ax.set_xlabel('$y$')
+    ax.plot(x_grid, c)
+    ax.set_ylabel('$\sigma(x)$')
+    ax.set_xlabel('$x$')
     ax.set_title('Optimal policy')
     plt.show()
 
 .. _pol_an:
+
 Analytical Solution
 -------------------
 We can compare the optimal policy function computed numerically with the analytical one. 
@@ -493,9 +495,9 @@ We can compare the optimal policy function computed numerically with the analyti
 The analytical optimal policy function in this cake eating problem is
 
 .. math::
-    c^* = \left(1-\beta^\frac{1}{\gamma}\right)y
+    \sigma^*(x) = \left(1-\beta^\frac{1}{\gamma}\right)x
 
-We define a function ``c_star`` that computes analytical optimal consumptions in each state :math:`y`,
+We define a function ``c_star`` that computes analytical optimal consumptions in each state :math:`x`,
 taking a ``CakeEating`` instance as input.
 
 .. code-block:: python3
@@ -503,9 +505,9 @@ taking a ``CakeEating`` instance as input.
     def c_star(ce):
 
         β, γ = ce.β, ce.γ
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
 
-        return (1 - β ** (1/γ)) * y_grid
+        return (1 - β ** (1/γ)) * x_grid
 
 .. code-block:: python3
 
@@ -515,13 +517,14 @@ taking a ``CakeEating`` instance as input.
 
     fig, ax = plt.subplots()
 
-    ax.plot(ce.y_grid, c_analytical, label='Analytical')
-    ax.plot(ce.y_grid, c, label='Numerical')
-    ax.set_ylabel('$\sigma(y)$')
-    ax.set_xlabel('$y$')
+    ax.plot(ce.x_grid, c_analytical, label='Analytical')
+    ax.plot(ce.x_grid, c, label='Numerical')
+    ax.set_ylabel('$\sigma(x)$')
+    ax.set_xlabel('$x$')
     ax.legend()
     ax.set_title('Comparison between analytical and numerical optimal policies')
     plt.show()
+
 
 Euler Equation
 ==============
@@ -635,6 +638,85 @@ Computationally, we can start with any initial guess of :math:`\sigma\left(x\rig
 
 Note that in each iteration we make sure the consumption is no more than the state :math:`x`.
 
+We leave the code as an exercise to the reader.
+
+Exercises
+=========
+
+Exercise 1
+----------
+Prove that the analytical solution satisfies the Euler equation.
+
+Exercise 2
+----------
+Create a function that implements the Euler operator which returns an updated policy function. Then us iteration to find the optimal policy function. 
+
+Compare The optimal policy function by Euler iteration to the analytical policy functions. 
+Comment on the difference between the optimal policy function returned by Euler iteration and the value function iteration method.
+
+
+
+Exercise 3
+------------
+Prove that the optimal policy function is linear and there exists an postive :math:`\theta` such that :math:`\sigma^*(x_t)=\theta x_t`
+
+Exercise 4
+-----------
+In our example above we assumed that the production function of captial was :math:`f(k)=k` because we were talking specficially about a cake.
+
+Now assume that the production function is in the form of :math:`f(k)=k^{\alpha}` where :math:`\alpha\in(0,1)`
+
+Make the required changes to the code above and plot the value and policy functions. Comment on the change in the policy function. 
+
+Note :math:`x_t=f(k_t)`
+
+Exercise 5
+----------
+Please try to accelerate the code using Numba.
+
+Specially, please speed up the ``CakeEating`` class using ``jitclass``, and speed up the operator functions ``T`` and ``K`` and the optimal policy function ``σ`` with ``jit`` using ``nopython`` mode.
+
+One basic function that is called by other functions is ``maximize``. You can choose to "jit" this function, or use an alternative
+``quantecon.optimize.brent_max`` which has already been "jitted" and is easy to use.
+
+Solutions
+==========
+
+Exercise 1
+----------
+The Euler equation is 
+
+.. math::
+    u'(c_t) = \beta u'(c_{t+1})
+
+this implies
+
+.. math::
+    c_{t}^{-\gamma} = \beta c_{t+1}^{-\gamma}
+
+Now we check that the analytical solution holds.
+
+.. math::
+    \beta^{\frac{1}{\gamma}}(1-\beta^{\frac{1}{\gamma}})x_t = (1-\beta^{\frac{1}{\gamma}})x_{t+1} 
+
+By the law of motion we get
+
+.. math::
+    \beta^{\frac{1}{\gamma}}x_t = x_t-c_t
+
+by simple re-arrangment we get
+
+.. math::
+    c_t = (1-\beta^{\frac{1}{\gamma}})x_t
+
+the analytical solution. Thus the Euler equation holds for the analytical solution.
+
+
+
+Exercise 2
+----------
+
+
 .. code-block:: python3
 
     def K(ce, c):
@@ -647,12 +729,12 @@ Note that in each iteration we make sure the consumption is no more than the sta
 
         """
 
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
         β = ce.β
         
-        y_next = y_grid - c # state transition
-        du_next = ce.du(interp(y_grid, c, y_next))
-        c_new = np.minimum(ce.du_inv(β * du_next), y_grid)
+        x_next = x_grid - c # state transition
+        du_next = ce.du(interp(x_grid, c, x_next))
+        c_new = np.minimum(ce.du_inv(β * du_next), x_grid)
 
         return c_new
 
@@ -664,9 +746,9 @@ Note that in each iteration we make sure the consumption is no more than the sta
                                verbose=True,
                                print_skip=25):
 
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
 
-        c = np.copy(y_grid) # initial guess
+        c = np.copy(x_grid) # initial guess
         c_new = np.empty_like(c)
 
         i = 0
@@ -699,97 +781,65 @@ Note that in each iteration we make sure the consumption is no more than the sta
 
     fig, ax = plt.subplots()
 
-    ax.plot(ce.y_grid, c_analytical, label='Analytical')
-    ax.plot(ce.y_grid, c_euler, label='Euler')
-    ax.set_ylabel('$\sigma(y)$')
-    ax.set_xlabel('$y$')
+    ax.plot(ce.x_grid, c_analytical, label='Analytical')
+    ax.plot(ce.x_grid, c_euler, label='Euler')
+    ax.set_ylabel('$\sigma(x)$')
+    ax.set_xlabel('$x$')
     ax.legend()
     ax.set_title('Optimal consumption computed using Euler equation iteration')
     plt.show()
 
-Exercises
-=========
-
-Exercise 1
-------------
-Prove that the optimal policy function is linear and there exists an postive :math:`\theta` such that :math:`c_t^*=\theta y_t`
-
-
-(might change this to verify the value function above is the value function?)
-
-Exercise 2
------------
-In our example above we assumed that the production function of captial was :math:`f(k)=k` because we were talking specficially about a cake.
-
-Now assume that the production function is in the form of :math:`f(k)=k^{\alpha}` where :math:`\alpha\in(0,1)`
-
-Make the required changes to the code above and plot the value and policy functions. Comment on the change in the policy function. 
-
-Note :math:`y_t=f(k_t)`
-
 Exercise 3
-----------
-Please try to accelerate the code using Numba.
-
-Specially, please speed up the ``CakeEating`` class using ``jitclass``, and speed up the operator functions ``T`` and ``K`` and the optimal policy function ``σ`` with ``jit`` using ``nopython`` mode.
-
-One basic function that is called by other functions is ``maximize``. You can choose to "jit" this function, or use an alternative
-``quantecon.optimize.brent_max`` which has already been "jitted" and is easy to use.
-
-Solutions
-==========
-
-Exercise 1
 -----------
-Suppose that the optimal policy is :math:`c_t^*=\theta y_t`
+Suppose that the optimal policy is :math:`\sigma^*(x_t)=\theta x_t`
 
 then
 
 .. math::
-    y_{t+1}=y_t(1-\theta)
+    x_{t+1}=x_t(1-\theta)
 
 which means
 
 .. math::
-    y_t = y_{0}(1-\theta)^t
+    x_t = x_{0}(1-\theta)^t
 
 
 Thus the optimal value function is.
 
 .. math::
-    v^*(y_0) = \sum_{t=0}^{\infty} \beta^{t} u(c_t)\\
-    v^*(y_0) = \sum_{t=0}^{\infty} \beta^{t} u(\theta y_{t})\\
-    v^*(y_0) = \sum_{t=0}^{\infty} \beta^{t} u\left(\theta y_{0}(1-\theta)^t\right)\\
-    v^*(y_0) = \sum_{t=0}^{\infty} \theta^{1-\gamma}\beta^{t} (1-\theta)^{t(1-\gamma)}u(y_{0})\\
-    v^*(y_0) = \frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}u(y_{0})
+    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u(c_t)\\
+    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u(\theta x_{t})\\
+    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u\left(\theta x_{0}(1-\theta)^t\right)\\
+    v^*(x_0) = \sum_{t=0}^{\infty} \theta^{1-\gamma}\beta^{t} (1-\theta)^{t(1-\gamma)}u(x_{0})\\
+    v^*(x_0) = \frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}u(x_{0})
 
 
 Now with the optimal form of the value funciton we can impliment it in to the bellman equation.
 
 .. math::
-    v(y) = \max_{0\leq c\leq y}
+    v(x) = \max_{0\leq c\leq x}
         \left\{
             u(c) + 
-            \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot u(y-c)
+            \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot u(x-c)
         \right\}\\
-    v(y) = \max_{0\leq c\leq y}
+    v(x) = \max_{0\leq c\leq x}
     \left\{
         \frac{c^{1-\gamma}}{1-\gamma} + 
-        \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot\frac{(y-c)^{1-\gamma}}{1-\gamma}
+        \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot\frac{(x-c)^{1-\gamma}}{1-\gamma}
     \right\}
 
 
 taking the F.O.C we have
 
 .. math::
-    c^{-\gamma} + \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(y-c)^{-\gamma}(-1) = 0\\
-    c^{-\gamma} = \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(y-c)^{-\gamma}
+    c^{-\gamma} + \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x-c)^{-\gamma}(-1) = 0\\
+    c^{-\gamma} = \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x-c)^{-\gamma}
 
 
-with :math:`c = \theta y` we get
+with :math:`c = \theta x` we get
 
 .. math::
-    \left(\theta y\right)^{-\gamma} =  \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(y(1-\theta))^{-
+    \left(\theta x\right)^{-\gamma} =  \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x(1-\theta))^{-
     \gamma}
 
 With some re-arrangment we get
@@ -801,52 +851,52 @@ With some re-arrangment we get
 this gives the optimal policy of
 
 .. math::
-    c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)y_t
+    \sigma^*(x_t) = \left(1-\beta^{\frac{1}{\gamma}}\right)x_t
 
 
 substituting :math:`\theta` into the value function above gives.
 
 .. math::
-    v^*(y_t) = \frac{\left(1-\beta^{\frac{1}{\gamma}}\right)^{1-\gamma}}{1-\beta\left(\beta^{\frac{{1-\gamma}}{\gamma}}\right)}u(y_{t})\\
+    v^*(x_t) = \frac{\left(1-\beta^{\frac{1}{\gamma}}\right)^{1-\gamma}}{1-\beta\left(\beta^{\frac{{1-\gamma}}{\gamma}}\right)}u(x_{t})\\
 
 
 .. math::
-    v^*(y_t) = \left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(y_t)
+    v^*(x_t) = \left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(x_t)
 
 
 Now we must verify that this value function is a fixed point, using the bellman equation.
 
 .. math::
-    v(y) = \max_{0\leq c\leq y}
+    v(x) = \max_{0\leq c\leq x}
         \left\{
             u(c) +
-            \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(y-c)
+            \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(x-c)
         \right\}\\
 
 taking the F.O.C we have
 
 .. math::
-    c^{-\gamma} - \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}(y-c)^{-\gamma} = 0
+    c^{-\gamma} - \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}(x-c)^{-\gamma} = 0
 
 re-arraning this gives
 
 .. math::
-    c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)y_t
+    \sigma^*(x_t) = \left(1-\beta^{\frac{1}{\gamma}}\right)x_t
 
 
 
-Exercise 2
+Exercise 4
 ----------
 First note the resource contraint binds
 
 .. math::
-    k_{t+1}=y_t-c_t\ \text{for all}\ t
+    k_{t+1}=x_t-c_t\ \text{for all}\ t
 
 
 from the production function output tomorrow is.
 
 .. math::
-    y_{t+1}=f(y_t-c_t)\ \text{for all}\ t
+    x_{t+1}=f(x_t-c_t)\ \text{for all}\ t
 
 
 We need to create a class to hold our primitives and return the right hand side of the bellman equation.
@@ -860,30 +910,32 @@ We need to create a class to hold our primitives and return the right hand side 
                     β=0.96,       # discount factor
                     γ=0.5,        # degree of relative risk aversion
                     α=0.4,
-                    y_grid_max=10,  # inital stock of capital Y
-                    y_grid_size=120):
+                    x_grid_max=10,  # inital stock of capital x
+                    x_grid_size=120):
 
             self.β, self.γ, self.α = β, γ, α
 
             # Set up grid
-            self.y_grid = np.linspace(1e-04, y_grid_max, y_grid_size)
+            self.x_grid = np.linspace(1e-04, x_grid_max, x_grid_size)
             
+        # Utility function
         def u(self, c):
             
             if self.γ == 1:
                 return np.log(c)
             else:
                 return (c**(1 - self.γ)) / (1 - self.γ)
+        # Production function       
         def f(self, k):
             return k**self.α
 
-        def state_action_value(self, c, y, v_array):
+        def state_action_value(self, c, x, v_array):
 
             u, f, β = self.u, self.f, self.β
 
-            v = lambda x: interp(self.y_grid, v_array, x)
+            v = lambda x: interp(self.x_grid, v_array, x)
 
-            return u(c) + β * v(f(y - c))
+            return u(c) + β * v(f(x - c))
 
 .. code-block:: python3
 
@@ -898,9 +950,9 @@ Now I'll graph the iterations in of the value function.
     fig, ax = plt.subplots()
 
 
-    ax.plot(y_grid, v, lw=2, alpha=0.6)
-    ax.set_ylabel('v*(y)', fontsize=12)
-    ax.set_xlabel('y', fontsize=12)
+    ax.plot(x_grid, v, lw=2, alpha=0.6)
+    ax.set_ylabel('v*(x)', fontsize=12)
+    ax.set_xlabel('x', fontsize=12)
 
     plt.show()
 
@@ -911,17 +963,17 @@ Now I'll graph the iterations in of the value function.
 
     fig, ax = plt.subplots()
 
-    ax.plot(y_grid, c_new,lw=2, alpha=0.6)
+    ax.plot(x_grid, c_new,lw=2, alpha=0.6)
 
-    ax.set_ylabel('$\sigma(y)$', fontsize=12)
-    ax.set_xlabel('$y$', fontsize=12)
+    ax.set_ylabel('$\sigma(x)$', fontsize=12)
+    ax.set_xlabel('$x$', fontsize=12)
     plt.show()
 
 The slope of the policy function has increased from what we saw :ref:`above <pol_an>`.
 
 Because there is diminishing returns to capital and there is no growth in captial. The agent wants to eat more today to avoid the shrinking of the cake tomorrow.
 
-Exercise 3
+Exercise 5
 ----------
 
 Let's start with importing from numba.
@@ -939,7 +991,7 @@ them to the ``jitclass`` decorator.
     cake_eating_data = [
         ('β', float64),              # discount factor
         ('γ', float64),              # degree of relative risk aversion
-        ('y_grid', float64[:])       # grid of y values
+        ('x_grid', float64[:])       # grid of x values
     ]
 
 .. code-block:: python3
@@ -947,10 +999,10 @@ them to the ``jitclass`` decorator.
     @jitclass(cake_eating_data)
     class CakeEating:
 
-        def __init__(self, β=0.96, γ=0.5, y_grid_max=10, y_grid_size=120):
+        def __init__(self, β=0.96, γ=0.5, x_grid_max=10, x_grid_size=120):
 
             self.β, self.γ = β, γ
-            self.y_grid = np.linspace(1e-5, y_grid_max, y_grid_size)
+            self.x_grid = np.linspace(1e-5, x_grid_max, x_grid_size)
 
         # Utility function
         def u(self, c):
@@ -972,14 +1024,14 @@ them to the ``jitclass`` decorator.
             return  u_prime ** (- 1 / self.γ)
 
         # objective function for optimization
-        def state_action_value(self, c, y, v_array):
+        def state_action_value(self, c, x, v_array):
 
             u, β = self.u, self.β
-            y_grid = self.y_grid
+            x_grid = self.x_grid
 
-            v = lambda y: interp(y_grid, v_array, y)
+            v = lambda x: interp(x_grid, v_array, x)
 
-            return u(c) + β * v(y - c)
+            return u(c) + β * v(x - c)
 
 .. code-block:: python3
 
@@ -997,11 +1049,11 @@ Value function iteration
 
         v_new = np.empty_like(v)
 
-        for i in range(len(ce.y_grid)):
-            y = ce.y_grid[i]
+        for i in range(len(ce.x_grid)):
+            x = ce.x_grid[i]
 
-            # Maximize RHS of Bellman equation at state y
-            v_new[i] = brent_max(ce.state_action_value, 1e-10, y, args=(y, v))[1]
+            # Maximize RHS of Bellman equation at state x
+            v_new[i] = brent_max(ce.state_action_value, 1e-10, x, args=(x, v))[1]
 
         return v_new
 
@@ -1010,7 +1062,7 @@ Value function iteration
     @jit(nopython=True)
     def compute_value_function(ce, max_iter=500, tol=1e-6):
 
-        v = np.zeros(ce.y_grid.size)
+        v = np.zeros(ce.x_grid.size)
         v_new = np.empty_like(v)
 
         i = 0
@@ -1031,9 +1083,9 @@ Value function iteration
     v = compute_value_function(ce)
     fig, ax = plt.subplots()
 
-    ax.plot(ce.y_grid, v)
-    ax.set_ylabel('$V(y)$')
-    ax.set_xlabel('$y$')
+    ax.plot(ce.x_grid, v)
+    ax.set_ylabel('$V(x)$')
+    ax.set_xlabel('$x$')
     ax.set_title('Value function')
     plt.show()
 
@@ -1044,12 +1096,12 @@ Optimal policy function
     @jit(nopython=True)
     def compute_policy(ce, v):
 
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
         c = np.empty_like(v)
 
-        for i in range(len(y_grid)):
-            y = y_grid[i]
-            c[i] = brent_max(ce.state_action_value, 1e-10, y, args=(y, v))[0]
+        for i in range(len(x_grid)):
+            x = x_grid[i]
+            c[i] = brent_max(ce.state_action_value, 1e-10, x, args=(x, v))[0]
 
         return c
 
@@ -1058,9 +1110,9 @@ Optimal policy function
     c = compute_policy(ce, v)
 
     fig, ax = plt.subplots()
-    ax.plot(ce.y_grid, c)
-    ax.set_ylabel('$\sigma(y)$')
-    ax.set_xlabel('$y$')
+    ax.plot(ce.x_grid, c)
+    ax.set_ylabel('$\sigma(x)$')
+    ax.set_xlabel('$x$')
     ax.set_title('Optimal policy')
     plt.show()
 
@@ -1071,12 +1123,12 @@ Euler equation iteration
     @jit(nopython=True)
     def K(ce, c):
 
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
         β = ce.β
         
-        y_next = y_grid - c # state transition
-        du_next = ce.du(interp(y_grid, c, y_next))
-        c_new = np.minimum(ce.du_inv(β * du_next), y_grid)
+        x_next = x_grid - c # state transition
+        du_next = ce.du(interp(x_grid, c, x_next))
+        c_new = np.minimum(ce.du_inv(β * du_next), x_grid)
 
         return c_new
 
@@ -1085,9 +1137,9 @@ Euler equation iteration
     @jit(nopython=True)
     def iterate_euler_equation(ce, max_iter=500, tol=1e-10):
 
-        y_grid = ce.y_grid
+        x_grid = ce.x_grid
 
-        c = np.copy(y_grid) # initial guess
+        c = np.copy(x_grid) # initial guess
         c_new = np.empty_like(c)
 
         i = 0
@@ -1109,8 +1161,8 @@ Euler equation iteration
 
     fig, ax = plt.subplots()
 
-    ax.plot(ce.y_grid, c_euler)
-    ax.set_ylabel('$\sigma(y)$')
-    ax.set_xlabel('$y$')
+    ax.plot(ce.x_grid, c_euler)
+    ax.set_ylabel('$\sigma(x)$')
+    ax.set_xlabel('$x$')
     ax.set_title('Optimal policy')
     plt.show()
