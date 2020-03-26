@@ -60,25 +60,30 @@ so that, in particular, :math:`x_0=\bar x`.
 
 We choose how much of the cake to eat in any given period :math:`t`.
 
-We assume that consuming quantity :math:`c` of the cake gives the agent utility :math:`u(c)`.
-
-We adopt the CRRA utility function
-
-.. math::
-    u(c) = \left\{
-            \begin{array}{ll}
-                \frac{c^{1-\gamma}}{1-\gamma}& \quad \text{for all}\ \gamma \neq 1 \text{and } \gamma\geq 0\\
-                \ln(c) & \quad \gamma = 1
-            \end{array}
-        \right.
-
-
 After choosing to consume :math:`c_t` of the cake in period :math:`t` there is
 
 .. math::
     x_{t+1} = x_t - c_t 
 
 left in period :math:`t+1`.
+
+
+Consuming quantity :math:`c` of the cake gives current utility :math:`u(c)`.
+
+We adopt the CRRA utility function
+
+.. math::
+    u(c) = \frac{c^{1-\gamma}}{1-\gamma} \qquad (\gamma \neq 1)
+    :label: crra_utility
+
+In Python this is
+
+.. code-block:: python3
+
+    def u(c, γ):
+
+        return c**(1 - γ) / (1 - γ)
+
 
 Future cake consumption utility is discounted according to :math:`\beta\in(0, 1)`.
 
@@ -88,6 +93,7 @@ The agent's problem can be written as
 
 .. math::
     \max_{\{c_t\}} \sum_{t=0}^\infty \beta^t u(c_t)
+    :label: cake_objective
 
 subject to
 
@@ -103,11 +109,18 @@ for all :math:`t`.
 A consumption path :math:`\{c_t\}` satisfying :eq:`cake_feasible` where
 :math:`x_0 = \bar x` is called **feasible**.
 
+In this problem, the following terminology is standard:
+
+* :math:`x_t` is called the **state variable**
+* :math:`c_t` is called the **control variable** or the **action**
+* :math:`\beta` and :math:`\gamma` are **parameters**
+
+
 
 Trade-Off
 ---------
 
-The key trade-off is this:
+The key trade-off in the cake-eating problem is this:
 
 * Delaying consumption is costly because of the discount factor.
 
@@ -127,8 +140,7 @@ The reasoning given above suggests that the discount factor :math:`\beta` and th
 
 Here's an educated guess as to what impact these parameters will have.
 
-First, higher :math:`\beta` implies less discounting, which should reduce
-the rate of consumption.
+First, higher :math:`\beta` implies less discounting, and hence more patience, which should reduce the rate of consumption.
 
 Second, higher :math:`\gamma` implies that marginal utility :math:`u'(c) =
 c^{-\gamma}` falls faster with :math:`c`.
@@ -189,200 +201,326 @@ choosing :math:`c` optimally means trading off current vs future rewards.
 
 Current rewards from choice :math:`c` are just :math:`u(c)`.
 
-Future rewards, assuming optimal behavior, are :math:`v(x-c)`.
+Future rewards, measured from next period and assuming optimal behavior, are :math:`v(x-c)`.
 
-These are the two terms on the right hand side of :eq:`bellman`, after discounting.
+These are the two terms on the right hand side of :eq:`bellman`, after suitable discounting.
 
-If :math:`c` is chosen optimally using this strategy, then we obtain maximal
-lifetime rewards from our current state :math:`y`.
+If :math:`c` is chosen optimally using this trade off strategy, then we obtain maximal
+lifetime rewards from our current state :math:`x`.
 
 Hence, :math:`v(x)` equals the right hand side of :eq:`bellman`, as claimed.
 
 
+An Analytical Solution
+----------------------
 
-Foo
-===
+It has been shown that, with :math:`u` as the CRRA utility function in
+:eq:`crra_utility`, the function
+
+.. math::
+    v^*(x_t) = \left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(x_t)
+    :label: crra_vstar
+
+solves the Bellman equation and hence is equal to the value function.
+
+You are asked to confirm that this is true in the exercises below.
+
+The solution :eq:`crra_vstar` depends heavily on the CRRA utility function.
+
+In fact, if we move away from CRRA utility, usually there is no analytical
+solution at all.
+
+In other words, beyond CRRA utility, we know that the value function still
+satisfies the Bellman equation, but we do not have a way of writing it
+explicitly, as a function of the state variable and the parameters.
+
+We will deal with that situation numerically when the time comes.
+
+Here is a Python representation of the value function:
 
 
-The function defined below computes the analytical solution of a given ``CakeEating`` instance.
 
 .. code-block:: python3
 
-    def v_star(ce):
+    def v_star(x, β, γ):
 
-        β, γ = ce.β, ce.γ
-        x_grid = ce.x_grid
-        u = ce.u
+        return (1 - β**(1 / γ))**(-γ) * u(x, γ)
 
-        a = β ** (1 / γ)
-        x = 1 - a
-        z = u(x_grid)
 
-        return z / x ** γ
+And here's a figure showing the function for fixed parameters:
+
 
 .. code-block:: python3
 
-    v_analytical = v_star(ce)
-
-.. code-block:: python3
+    β, γ = 0.95, 1.2
+    x_grid = np.linspace(0.1, 5, 100)
 
     fig, ax = plt.subplots()
 
-    ax.plot(x_grid, v_analytical, label='value function')
-    ax.set_ylabel('$v(x)$', fontsize=12)
+    ax.plot(x_grid, v_star(x_grid, β, γ), label='value function')
+
     ax.set_xlabel('$x$', fontsize=12)
-    ax.legend()
+    ax.legend(fontsize=12)
+
     plt.show()
 
+
+
+The Optimal Policy
+==================
+
+Now that we have the value function, it is straightforward to calculate the
+optimal action at each state.
+
+At state :math:`x`, we should choose :math:`c` as the value the maximizes the
+right hand side of the Bellman equation :eq:`bellman`.
 
 .. math::
     c^*_t = \sigma(x_t) = \arg \max_{c_t} \{u(c_t) + \beta v(x_t - c_t)\}
 
+We can think of this optimal choice as a function of the state :math:`x`, in
+which case we call it the **optimal policy**.
 
-The analytical optimal policy function in this cake eating problem is
+We will denote the optimal policy by :math:`\sigma^*`, so that
 
 .. math::
-    c^* = \left(1-\beta^\frac{1}{\gamma}\right)x
+    \sigma^*(x) = \arg \max_{c} \{u(c) + \beta v(x - c)\}
+    \quad \text{for all } x
+
+If we plug the analytical expression :eq:`crra_vstar` for the value function
+into the right hand side and compute the optimum, we find that 
+
+.. math::
+    \sigma^*(x) = \left(1-\beta^\frac{1}{\gamma}\right)x
+    :label: crra_opt_pol
+
+
+
+
+Now let's recall our intuition on the impact of parameters.
+
+We guessed that the consumption rate would be decreasing in both parameters.
+
+This is in fact the case, as can be seen from :eq:`crra_opt_pol`.
+
+Here's some plots that illustrate.
 
 
 .. code-block:: python3
 
-    def c_star(ce):
+    def c_star(x, β, γ):
 
-        β, γ = ce.β, ce.γ
-        x_grid = ce.x_grid
+        return (1 - β ** (1/γ)) * x
 
-        return (1 - β ** (1/γ)) * x_grid
-
+Continuing with the values for :math:`\beta` and :math:`\gamma` used above, the
+plot is
 
 .. code-block:: python3
 
     fig, ax = plt.subplots()
-
-    ax.plot(ce.x_grid, c_analytical, label='Analytical')
-    ax.plot(ce.x_grid, c, label='Numerical')
+    ax.plot(x_grid, c_star(x_grid, β, γ), label='default parameters')
+    ax.plot(x_grid, c_star(x_grid, β + 0.02, γ), label='higher $\\beta$')
+    ax.plot(x_grid, c_star(x_grid, β, γ + 0.2), label='higher $\gamma$')
     ax.set_ylabel('$\sigma(x)$')
     ax.set_xlabel('$x$')
     ax.legend()
-    ax.set_title('Comparison between analytical and numerical optimal policies')
-    plt.show()
 
+    plt.show()
 
 
 The Euler Equation
 ==================
 
-Roadmap.
+In the discussion above we have provided a complete solution to the cake
+eating problem in the case of CRRA utility.
+
+There is in fact another way to solve for the optimal policy, based on the
+so-called **Euler equation**.
+
+Although we already have a complete solution, now is a good time to study the
+Euler equation.
+
+This is because, for more difficult problems, this equation
+provides key insights that are hard to obtain by other methods.
+
 
 
 Statement and Implications
 --------------------------
 
-
-
-Derivation I: An Intuitive Approach
------------------------------------
-
-
-In this section, we will
-show you that a little more math helps us understand the intertemporal trade-offs of consumptions analytically.
-
-We will show you two ways of deriving the optimality conditions.
-
-First, we focus on the original optimization problem and maximize the discounted sum of utilities using Lagrange multiplier.
-
-
-
-
-Derivation II: The Lagrangian Approach
---------------------------------------
-
-Define the Lagrangian function as
-
-.. math::
-
-    \mathcal{L}=\sum_{t=0}^{\infty}\beta^{t}\left(u\left(c_{t}\right)+\lambda_{t}\left(x_{t}-c_{t}-x_{t+1}\right)\right)
-
-Taking first derivatives with respect to two sequences of control variables :math:`\{c_t\}_{t=0}^{\infty}` and
-:math:`\{x_{t+1}\}_{t=0}^{\infty}`, we have
-
-.. math::
-
-    u^{\prime}\left(c_{t}\right)-\lambda_{t}=0 \quad \text{for all} \ t \\
-    \lambda_{t}-\beta\lambda_{t+1}=0 \quad \text{for all} \ t
-
-when the consumptions are optimal. Combining these two first order conditions together gives us the
-following equation for optimal consumptions today and tomorrow
+The Euler equation for the present problem can be stated as 
 
 .. math::
     :label: euler
 
-    u^{\prime}\left(c^*_{t}\right)=\beta u^{\prime}\left(c^*_{t+1}\right)
+    u^{\prime} (c^*_{t})=\beta u^{\prime}(c^*_{t+1})
 
-which is what we call *Euler function*. Intuitively, this suggests that if :math:`\{c^*_t\}_{t=0}^{\infty}` is the optimal
-consumption sequence, then the marginal utility of consuming *one more unit* of cake today equals to the discounted
-marginal utility of consuming *one more unit* of cake tomorrow.
+This is necessary condition for the optimal path.  
+
+It says that, along the optimal path, marginal rewards are equalized across time, after appropriate discounting.
+
+This makes sense: optimality is obtained by smoothing consumption up to the
+point where no marginal gains remain.
+
+We can also state the Euler equation in terms of the policy function.
+
+A **feasible consumption policy** is a map :math:`y \mapsto \sigma(y)`
+satisfying :math:`0 \leq \sigma(y) \leq (y)`.
+
+The last restriction says that we cannot consume more than the remaining
+quantity of cake.
+
+A feasible consumption policy :math:`\sigma` is said to **satisfy the Euler equation** if, for
+all :math:`y > 0`,
+
+.. math::
+    :label: euler_pol
+
+    u^{\prime}( \sigma(y) )
+    = \beta u^{\prime} (\sigma(y - c))
+
+Evidently :eq:`euler_pol` is just the policy equivalent of :eq:`euler`.
+
+It turns out that a feasible policy is optimal if and
+only if it satisfies the Euler equation.
+
+In the exercises, you are asked to verify that the optimal policy
+:eq:`crra_opt_pol` does indeed satisfy this functional equation.
+
+.. note::
+    A **functional equation** is an equation where the unknown object is a function.
+
+For a proof of sufficiency of the Euler equation in a very general setting,
+see proposition 2.2 of :cite:`ma2020income`.
+
+The following arguments focus on necessity, explaining why an optimal path or 
+policy should satisfy the Euler equation.
 
 
-Derivation III: Using the Bellman Equation
+
+
+Derivation I: A Perturbation Approach
+-------------------------------------
+
+Let's write :math:`c` as a shorthand for consumption path :math:`\{c_t\}_{t=0}^\infty`.
+
+The overall cake-eating maximization problem can be written as
+
+.. math::
+    \max_{c \in F} U(c) 
+    \quad \text{where } U(c) := \max_{\{c_t\}} \sum_{t=0}^\infty \beta^t u(c_t)
+
+and :math:`F` is the set of feasible consumption paths.
+
+We know that differentiable functions have a zero gradient at a maximizer.
+
+So the optimal path :math:`c^* := \{c^*_t\}_{t=0}^\infty` must satisfy
+:math:`U'(c^*) = 0`.
+
+.. note::
+    If you insist on knowing exactly how the derivative :math:`U'(c^*)` is defined, 
+    given that the argument
+    :math:`c^*` is a vector of infinite length, you can start by learning about 
+    `Gateaux derivatives <https://en.wikipedia.org/wiki/Gateaux_derivative>`__,
+    although such knowledge is not assumed in what follows.
+
+In other words, the rate of change in :math:`U` must be zero for any
+infinitesimally small (and feasible) perturbation away from the optimal path.
+
+So consider a feasible perturbation that reduces consumption at time :math:`t` to 
+:math:`c^*_t - h`
+and increases it in the next period to :math:`c^*_{t+1} + h`.
+
+Consumption does not change in any other period.
+
+We call this perturbed path :math:`c^h`.
+
+By the preceding argument about zero gradients, we have
+
+.. math::
+    \lim_{h \to 0} \frac{U(c^h) - U(c^*)}{h} = U'(c^*) = 0
+
+
+Recalling that consumption only changes at :math:`t` and :math:`t+1`, this
+becomes
+
+.. math::
+    \lim_{h \to 0} 
+    \frac{\beta^t u(c^*_t - h) + \beta^{t+1} u(c^*_{t+1} + h) 
+          - \beta^t u(c^*_t) - \beta^{t+1} u(c^*_{t+1}) }{h} = 0
+
+After rearranging, the same expression can be written as
+
+.. math::
+    \lim_{h \to 0} 
+        \frac{u(c^*_t - h) - u(c^*_t) }{h}
+    + \lim_{h \to 0} 
+        \frac{ \beta u(c^*_{t+1} + h) - u(c^*_{t+1}) }{h} = 0
+
+or, taking the limit,
+
+.. math::
+    - u'(c^*_t) + \beta u'(c^*_{t+1}) = 0
+
+This is just the Euler equation.
+
+
+Derivation II: Using the Bellman Equation
 ------------------------------------------
 
-The other way of deriving the Euler equation is to use the Bellman equation :eq:`bellman`. Since the Bellman equation is recursive,
-we can focus on finding the optimal :math:`c_t^*` given :math:`x_t` instead of finding :math:`\{c^*_t\}_{t=0}^{\infty}` as a whole.
+Another way to derive the Euler equation is to use the Bellman equation :eq:`bellman`. 
 
-Taking first derivative with respect to :math:`c_t`, we get
+Taking the derivative on the right hand side of the Bellman equation with
+respect to :math:`c` and setting it to zero, we get
 
 .. math::
     :label: bellman_FOC
 
-    u^{\prime}\left(c_{t}\right)=\beta V^{\prime}\left(x_{t+1}\right).
+    u^{\prime}(c)=\beta v^{\prime}(x - c)
 
-To know what :math:`V^{\prime}\left(x_{t+1}\right)` is, we first define the right hand side of the Bellman equation
-as :math:`f\left(c_t,x_t\right)` and therefore
+To obtain :math:`v^{\prime}(x - c)`, we set
+:math:`g(c,x) = u(c) + \beta v(x - c)`, so that, at the optimal choice of
+consumption, 
 
 .. math::
     :label: bellman_equality
 
-    V\left(x_{t}\right) = f\left(c_{t}^{*},x_{t}\right)
+    v(x) = g(c,x)
 
-Taking differential on both sides of :eq:`bellman_equality` at :math:`c_t=c_t^*`, we have
-
-.. math::
-    dV\left(x_{t}\right) = df\left(c_{t},x_{t}\right)\bigg|_{c_{t}=c_{t}^{*}}
-    =\left(\frac{\partial f\left(c_{t},x_{t}\right)}{\partial c_{t}}dc_{t}+\frac{\partial f\left(c_{t},x_{t}\right)}{\partial x_{t}}dx_{t}\right)\bigg|_{c_{t}=c_{t}^{*}}
-
-Note that :math:`f\left(c_{t},x_{t}\right)` is maximized at :math:`c^*_t`, which implies :math:`\frac{\partial f\left(c_{t},x_{t}\right)}{\partial c_{t}}\big|_{c_{t}=c_{t}^{*}}=0` and
+Differentiating both sides while acknowledging that the maximizing consumption will depend
+on :math:`x`, we get
 
 .. math::
+    v' (x) = 
+    \frac{\partial }{\partial c} g(c,x) \frac{\partial c}{\partial x}
+     + \frac{\partial }{\partial x} g(c,x)
     
-    dV\left(x_{t}\right)=\frac{\partial f\left(c_{t},x_{t}\right)}{\partial x_{t}}dx_{t}=\beta V^{\prime}\left(x_{t+1}\right)dx_{t}
 
-which is a result of *Envelope Theorem*. Dividing both sides by :math:`dx_{t}` gives us
+When :math:`g(c,x)` is maximized at :math:`c`, we have :math:`\frac{\partial }{\partial c} g(c,x) = 0`.
+
+Hence the derivative simplifies to
 
 .. math::
+    v' (x) = 
+    \frac{\partial g(c,x)}{\partial x}
+    = \frac{\partial }{\partial x} \beta v(x - c)
+    = \beta v^{\prime}(x - c)
     :label: bellman_envelope
 
-    V^{\prime}\left(x_{t}\right)=\beta V^{\prime}\left(x_{t+1}\right)
 
-We can substitute :math:`\beta V^{\prime}\left(x_{t+1}\right)` in :eq:`bellman_FOC` using :eq:`bellman_envelope`,
+(This argument is an example of the `Envelope Theorem <https://en.wikipedia.org/wiki/Envelope_theorem>`__.) 
+
+
+But now an application of :eq:`bellman_FOC` gives
 
 .. math::
     :label: bellman_v_prime
 
-    u^{\prime}\left(c_{t}\right)=V^{\prime}\left(x_{t}\right)
+    u^{\prime}(c) = v^{\prime}(x)
 
-and we can derive the Euler equation again using :eq:`bellman_v_prime` and :eq:`bellman_FOC`.
+Thus, the derivative of the value function is equal to marginal utility.
 
-It is interesting to observe the connection between methods of Lagrange multiplier and Bellman equation, which is
-
-.. math::
-    
-    V^{\prime}\left(x_{t}\right)=\lambda_{t}
-
-This will be much more clear if we think about the intuition behind these two terms: they both represent
-the change in the optimal value of the objective function due to the relaxation of a given constraint (in this
-case, it is one additional unit of cake for free). :math:`\lambda_{t}` is usually referred to as *shadow price*
-in economics or *costate variable* in control theory.
+Combining this fact with :eq:`bellman_envelope` recovers the Euler equation.
 
 
 Exercises
@@ -391,18 +529,22 @@ Exercises
 Exercise 1
 ------------
 
-Prove that the optimal policy function is linear and there exists an postive :math:`\theta` such that :math:`c_t^*=\theta x_t`
+How does one obtain the expressions for the value function and optimal policy
+given in :eq:`crra_vstar` and :eq:`crra_opt_pol` respectively?
+
+The first step is to make a guess of the functional form for the consumption
+policy.
+
+So suppose that we do not know the solutions and start with a guess that the
+optimal policy is linear.
+
+In other words, we conjecture that there exists a positive :math:`\theta` such that setting :math:`c_t^*=\theta x_t` for all :math:`t` produces an optimal path.
+
+Starting from this conjecture, try to obtain the solutions :eq:`crra_vstar` and :eq:`crra_opt_pol`.
 
 
-(might change this to verify the value function above is the value function?)
-
-Exercise 2
------------
-
-In our example above we assumed that the production function of captial was :math:`f(k)=k` because we were talking specficially about a cake.
-
-Derive the Euler equation.
-
+In doing so, you will need to use the definition of the value function and the
+Bellman equation.
 
 
 Solutions
@@ -412,102 +554,84 @@ Solutions
 Exercise 1
 -----------
 
-Suppose that the optimal policy is :math:`c_t^*=\theta x_t`
-
-then
+We start with the conjecture :math:`c_t^*=\theta x_t`, which leads to a path
+for the state variable (cake size) given by 
 
 .. math::
     x_{t+1}=x_t(1-\theta)
 
-which means
+Then :math:`x_t = x_{0}(1-\theta)^t` and hence
+
 
 .. math::
-    x_t = x_{0}(1-\theta)^t
 
+    \begin{aligned}
+    v(x_0) 
+       & = \sum_{t=0}^{\infty} \beta^t u(\theta x_t)\\
+       & = \sum_{t=0}^{\infty} \beta^t u(\theta x_0 (1-\theta)^t ) \\
+       & = \sum_{t=0}^{\infty} \theta^{1-\gamma} \beta^t (1-\theta)^{t(1-\gamma)} u(x_0) \\
+       & = \frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}u(x_{0})
+    \end{aligned}
 
-Thus the optimal value function is.
-
-.. math::
-    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u(c_t)\\
-    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u(\theta x_{t})\\
-    v^*(x_0) = \sum_{t=0}^{\infty} \beta^{t} u\left(\theta x_{0}(1-\theta)^t\right)\\
-    v^*(x_0) = \sum_{t=0}^{\infty} \theta^{1-\gamma}\beta^{t} (1-\theta)^{t(1-\gamma)}u(x_{0})\\
-    v^*(x_0) = \frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}u(x_{0})
-
-
-Now with the optimal form of the value funciton we can impliment it in to the bellman equation.
+From the Bellman equation, then,
 
 .. math::
-    v(x) = \max_{0\leq c\leq x}
-        \left\{
-            u(c) + 
-            \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot u(x-c)
-        \right\}\\
-    v(x) = \max_{0\leq c\leq x}
-    \left\{
-        \frac{c^{1-\gamma}}{1-\gamma} + 
-        \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot\frac{(x-c)^{1-\gamma}}{1-\gamma}
-    \right\}
+    \begin{aligned}
+        v(x) & = \max_{0\leq c\leq x}
+            \left\{
+                u(c) + 
+                \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot u(x-c)
+            \right\} \\
+             & = \max_{0\leq c\leq x}
+                \left\{
+                    \frac{c^{1-\gamma}}{1-\gamma} + 
+                    \beta\frac{\theta^{1-\gamma}}
+                    {1-\beta(1-\theta)^{1-\gamma}}
+                    \cdot\frac{(x-c)^{1-\gamma}}{1-\gamma}
+                \right\}
+    \end{aligned}
 
-
-taking the F.O.C we have
+From the first order condition, we obtain
 
 .. math::
-    c^{-\gamma} + \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x-c)^{-\gamma}(-1) = 0\\
+    c^{-\gamma} + \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x-c)^{-\gamma}(-1) = 0
+
+or
+
+.. math::
     c^{-\gamma} = \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x-c)^{-\gamma}
 
 
-with :math:`c = \theta x` we get
+With :math:`c = \theta x` we get
 
 .. math::
     \left(\theta x\right)^{-\gamma} =  \beta\frac{\theta^{1-\gamma}}{1-\beta(1-\theta)^{1-\gamma}}\cdot(x(1-\theta))^{-
     \gamma}
 
-With some re-arrangment we get
+Some rearrangement produces
 
 .. math::
     \theta = 1-\beta^{\frac{1}{\gamma}}
 
 
-this gives the optimal policy of
+This confirms our earlier expression for the optimal policy:
 
 .. math::
     c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)x_t
 
 
-substituting :math:`\theta` into the value function above gives.
+Substituting :math:`\theta` into the value function above gives.
 
 .. math::
-    v^*(x_t) = \frac{\left(1-\beta^{\frac{1}{\gamma}}\right)^{1-\gamma}}{1-\beta\left(\beta^{\frac{{1-\gamma}}{\gamma}}\right)}u(x_{t})\\
+    v^*(x_t) = \frac{\left(1-\beta^{\frac{1}{\gamma}}\right)^{1-\gamma}}
+    {1-\beta\left(\beta^{\frac{{1-\gamma}}{\gamma}}\right)} u(x_t) \\
 
+Rearranging gives
 
 .. math::
     v^*(x_t) = \left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(x_t)
 
 
-Now we must verify that this value function is a fixed point, using the bellman equation.
-
-.. math::
-    v(x) = \max_{0\leq c\leq x}
-        \left\{
-            u(c) +
-            \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}u(x-c)
-        \right\}\\
-
-taking the F.O.C we have
-
-.. math::
-    c^{-\gamma} - \beta\left(1-\beta^\frac{1}{\gamma}\right)^{-\gamma}(x-c)^{-\gamma} = 0
-
-Rearranging gives
-
-.. math::
-    c_t^* = \left(1-\beta^{\frac{1}{\gamma}}\right)x_t
+Our claims are now verified.
 
 
-
-
-Exercise 2
-----------
-
-To be added.
