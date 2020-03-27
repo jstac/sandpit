@@ -376,8 +376,8 @@ all :math:`y > 0`,
 .. math::
     :label: euler_pol
 
-    u^{\prime}( \sigma(y) )
-    = \beta u^{\prime} (\sigma(y - c))
+    u^{\prime}( \sigma(x) )
+    = \beta u^{\prime} (\sigma(x - \sigma(x)))
 
 Evidently :eq:`euler_pol` is just the policy equivalent of :eq:`euler`.
 
