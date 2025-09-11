@@ -1,139 +1,116 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.17.2
-#   kernelspec:
-#     display_name: Python 3
-#     language: python
-#     name: python3
-# ---
+"""
 
-# %% [markdown]
-# # MLE-KG estimator v.s. Hill estimator and Rank-size estimator
+MLE-KG Estimator vs Hill Estimator and Rank-Size Estimator.
+ 
+Monte Carlo comparison of tail parameter estimation methods for lognormal
+transition models.
 
-# %% [markdown]
-# ## log normal transition
+Model:
+    y = b + x * exp(μ + σZ) where Z ~ N(0,1)
 
-# %% [markdown]
-# Code updates (relative to version R2):
-#
-# 1. Implemented a full joint search after profiling, to refine the estimates of (b,μ,σ).
-#
-# 2. Keep only the leave-one-out (LOO) option for simplicity.
-#
-# 3. Adjusted parameter grids: updated alpha_list and sigma_list.
-#
-# 4. Added a runtime measurement to report total execution time.
-#
-# 5. Reduced the burn-in period from 10,000 to 2,000 iterations.
 
-# %% [markdown]
-# ### Configuration
+Likelihood:
+    f(x,y) = [1/σ] * [1/(y-b)] * φ((ln((y-b)/x)-μ)/σ) for y > b
+ 
+Log-likelihood:
+    ℓ(b, μ, σ) = Σ_i [-ln σ - ln(y_i-b) - 0.5 ln(2π) - (ln((y_i-b)/x_i)-μ)²/(2σ²)]
+ 
+Closed-form estimators given b:
+    - r_i(b) = ln((y_i - b)/x_i)
+    - μ̂(b) = mean(r_i(b))
+    - σ̂²(b) = mean((r_i(b) - μ̂(b))²)
 
-# %%
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar, root_scalar, minimize
 import time
 
-# -------------------------
-# Simulation configuration
-# -------------------------
+# == Config == #
 
-alpha_list = (1.2, 1.35, 1.5)                              # 1.2-1.5 preferred
-sigma_list = (0.4, 0.55, 0.7, 0.85, 1.0)  # from 0.45 to 0.70 preferred
-b_list=(0.1, 1.0)
-n=2000
-burn_in = 2000
-R=500
-seed=0
+alpha_list = (1.2, 1.35, 1.5)               # Tail parameter values
+sigma_list = (0.4, 0.55, 0.7, 0.85, 1.0)    # Volatility parameters
+b_list = (0.1, 1.0)                         # Baseline parameters
+n = 2000                                    # Sample size
+burn_in = 2000                              # Burn-in iterations
+R = 500                                     # Monte Carlo replications
+seed = 0                                    # Random seed
 
 
-# %% [markdown]
-# ### Functions for DGP
-
-# %%
-# -------------------------
-# X generate process
-# -------------------------
+# == Data Generating Process == #
 
 def draw_x0(n, rng):
-    # positive covariate, e.g. lognormal
+    """Generate initial positive covariate from lognormal distribution."""
     return np.exp(rng.normal(0.0, 0.5, size=n))
 
+
 def draw_y_given_x(x, b, mu, sigma, rng):
+    """Generate y given x using the lognormal transition model."""
     z = rng.standard_normal(size=len(x))
     y = b + x * np.exp(mu + sigma * z)
     return y
 
+
 def draw_sample(n, b, mu, sigma, burn_in, rng):
+    """Generate sample with burn-in period for stationarity."""
     x = draw_x0(n, rng)
-    # burn-in to get close to stationarity
+    # Burn-in to approach stationarity
     for _ in range(burn_in):
         x = draw_y_given_x(x, b, mu, sigma, rng)
     y = draw_y_given_x(x, b, mu, sigma, rng)
     return x, y
 
-# %% [markdown]
-# ### Functions for Different Estimators
 
-# %%
-
-# -------------------------
-# MLE machinery
-# -------------------------
-
-# =========================================================
-# Model: y_i = b + x_i * exp( mu + sigma * Z_i ), Z_i ~ N(0,1)
-# Likelihood: f(x,y) = [1/sigma] * [1/(y-b)] * phi( (ln((y-b)/x)-mu)/sigma ), y > b
-# Log-likelihood:
-#   ℓ(b, μ, σ) = Σ_i [ -ln σ - ln(y_i-b) - 0.5 ln(2π) - (ln((y_i-b)/x_i)-μ)^2 / (2 σ^2) ]
-# Closed-form given b:
-#   r_i(b)  = ln((y_i - b)/x_i)
-#   μ̂(b)   = mean r_i(b)
-#   σ̂^2(b) = mean (r_i(b) - μ̂(b))^2
-# FOC(b) profiled: Σ [ 1/(y_i-b) * { 1 + (r_i - μ̂(b))/σ̂^2(b) } ] = 0
-# =========================================================
+# == Maximum Likelihood Estimation == #
 
 
 def safe_r(y, x, b):
+    """Compute log ratio r_i = ln((y_i - b)/x_i) with safety checks."""
     z = y - b
     if np.any(z <= 0):
         raise ValueError("b must be strictly less than all y_i.")
     return np.log(z) - np.log(x)
 
+
 def mu_sig2_hat(y, x, b):
+    """Compute closed-form MLE estimates of mu and sigma^2 given b."""
     r = safe_r(y, x, b)
     mu = r.mean()
     sig2 = ((r - mu)**2).mean()
     return mu, max(sig2, 1e-16)
 
+
 def loglik_forward(y, x, b, mu, sig2):
+    """Compute forward (conditional) log-likelihood."""
     r = safe_r(y, x, b)
     n = r.size
-    return - n * 0.5 * np.log(2*np.pi) - 0.5 * n * np.log(max(sig2, 1e-16)) \
-           - np.sum(np.log(y - b)) - (1.0/(2*max(sig2, 1e-16))) * np.sum((r - mu)**2)
+    return (- n * 0.5 * np.log(2*np.pi) 
+            - 0.5 * n * np.log(max(sig2, 1e-16))
+            - np.sum(np.log(y - b)) 
+            - (1.0/(2*max(sig2, 1e-16))) * np.sum((r - mu)**2))
 
 def cond_density_matrix(y_vec, x_vec, b, mu, sig2):
-    """Lognormal density of Y|X=x."""
+    """
+    Compute a matrix D_{ij} of conditional density values f(Y_i | X_j) 
+    for all i,j pairs.
+
+    """
     y = np.asarray(y_vec, dtype=float)
     x = np.asarray(x_vec, dtype=float)
     if np.any(y <= b):
         raise ValueError("b must be strictly less than all y_i.")
     sigma = np.sqrt(max(sig2, 1e-16))
-    t = y - b                             # length n
-    log_t = np.log(t)                     # (n,)
-    log_x = np.log(np.maximum(x, 1e-16))    # (n,)
+    t = y - b                                   
+    log_t = np.log(t)                          
+    log_x = np.log(np.maximum(x, 1e-16))      
     
     # Broadcast to (n,n): logratio[i,j] = log_t[i] - log_x[j] - mu
     logratio = log_t[:, None] - log_x[None, :] - mu
     
-    const = 1.0 / (sigma * np.sqrt(2*np.pi))       # scalar
-    D = const * 1.0 / np.maximum(t[:, None], 1e-16) * np.exp( -0.5 * logratio**2 / max(sig2, 1e-16))  # (n,n)
+    const = 1.0 / (sigma * np.sqrt(2*np.pi))
+    D = (const / np.maximum(t[:, None], 1e-16) * 
+         np.exp(-0.5 * logratio**2 / max(sig2, 1e-16)))
     return D
 
 def leave_one_out_density(x_vec, b, mu, sig2):
@@ -153,17 +130,21 @@ def leave_one_out_density(x_vec, b, mu, sig2):
     loo = (column_sums - diag) / (n - 1)
     return np.maximum(loo, 1e-300)
 
+
 def loglik_marginal(x, b, mu, sig2):
     """Compute log likelihood of marginal distributions over X_i's"""
     return np.sum(np.log(leave_one_out_density(x, b, mu, sig2)))
+
 
 def loglik_profile(y, x, b):
     mu, sig2 = mu_sig2_hat(y, x, b)
     return loglik_forward(y, x, b, mu, sig2) + loglik_marginal(x, b, mu, sig2)
 
+
 def total_loglik(y, x, b, mu, sig2):
     """Full objective: conditional + marginal log-likelihood."""
     return loglik_forward(y, x, b, mu, sig2) + loglik_marginal(x, b, mu, sig2)
+
 
 def joint_optimize_local(y, x, b0, mu0, sig20,
                          w_b=None, w_mu=None, w_logsig2=1.0,
@@ -245,6 +226,7 @@ def joint_optimize_local(y, x, b0, mu0, sig20,
         print(out)
     return out
 
+
 def mle_single(x, y):
     """
     1) Profile: maximize in b using mu_sig2_hat(b).
@@ -298,23 +280,27 @@ def mle_single(x, y):
         "alpha_hat_joint": alpha_hat_joint
     }
 
-# -------------------------
-# Hill estimator for Pareto tail
-#   Given positive tail sample T, sort ascending:
-#   X_(1) <= ... <= X_(n). For k top order stats:
-#   u = X_(n-k)
-#   Hill alpha_hat(k) = [ (1/k) * sum_{i=1..k} ln( X_(n-i+1) / u ) ]^{-1}
-# -------------------------
+# ## Hill Estimator for Pareto Tails
+# 
+# **Method**: For positive tail sample T with order statistics X_(1) ≤ ... ≤ X_(n):
+# - Threshold: u = X_(n-k)
+# - Hill estimator: α̂(k) = [1/k * Σ ln(X_(n-i+1) / u)]^(-1)
+
+# %%
 
 def hill_alpha(T, k):
+    """Compute Hill estimator for tail index using top k order statistics."""
     T = np.asarray(T, float)
-    if np.any(T <= 0): raise ValueError("Tail sample must be strictly positive for Hill.")
+    if np.any(T <= 0):
+        raise ValueError("Tail sample must be strictly positive for Hill.")
+    
     T_sorted = np.sort(T)
     n = T_sorted.size
     if not (1 <= k < n):
         raise ValueError("k must be between 1 and n-1.")
-    u = T_sorted[n - k - 1]
-    top = T_sorted[(n - k):]
+    
+    u = T_sorted[n - k - 1]  # Threshold
+    top = T_sorted[(n - k):] # Top k order statistics
     return 1.0 / np.mean(np.log(top / u)), u
 
 def hill_plot(T, k_min=5, k_max=None, mark_k=None, ax=None, title="Hill plot"):
@@ -341,9 +327,12 @@ def hill_plot(T, k_min=5, k_max=None, mark_k=None, ax=None, title="Hill plot"):
     ax.grid(alpha=0.3)
     return ks, np.array(alphas)
 
-# ---------------------------------------------------------
-# Simple k-selection: minimize KS distance between fitted Pareto and empirical tail
-# ---------------------------------------------------------
+# ## Automatic k Selection
+# 
+# Uses Kolmogorov-Smirnov distance to select optimal k by minimizing
+# distance between fitted Pareto and empirical tail distribution.
+
+# %%
 
 def ks_distance_pareto(T, k, u):
     T = np.sort(np.asarray(T, float))
@@ -370,21 +359,26 @@ def choose_k_by_KS(T, k_min=5, k_max=None):
             best = (d, k, a_hat, u)
     return {"k": best[1], "alpha": best[2], "u": best[3], "KS": best[0]}
 
-# ---------------------------------------------------------
-# Tail regression alpha:  ln S(x) ≈ ln c − α ln x 
-# Conditional tail: for x ≥ u, S(X≥x|X≥u) = (u/x)^α  ⇒ ln S = α ln(u/x)
-#     Use top-k order stats, S_i = i/k  for the tail only; regress ln S_i on ln(u/x_i).
-# ---------------------------------------------------------
+# ## Tail Regression Estimator
+# 
+# **Method**: For conditional tail S(X≥x|X≥u) = (u/x)^α:
+# - Use top-k order statistics with empirical survival S_i = i/k
+# - Regress ln(S_i) on ln(u/x_i) to estimate α
+
+# %%
 
 def tail_regression_alpha(T, k):
+    """Estimate tail index using regression on log survival function."""
     T = np.sort(np.asarray(T, float))
     n = T.size
     tail = T[(n - k):]
     u = tail[0]
-    x = np.log(u / tail)                    # regressors
-    S = (np.arange(k, 0, -1)) / k           # empirical conditional survival in tail
-    y = np.log(S)                           # response
-    # Linear fit y = a1 * x + a0  (slope should be α, a0 ideally 0)
+    
+    x = np.log(u / tail)                     # Regressors: ln(u/x_i)
+    S = (np.arange(k, 0, -1)) / k           # Empirical survival: i/k
+    y = np.log(S)                           # Response: ln(S_i)
+    
+    # Linear regression: y = a1 * x + a0 (slope a1 estimates α)
     a1, a0 = np.polyfit(x, y, 1)
     return {
         "a1_hat": a1,
@@ -416,23 +410,24 @@ plt.show()
 mle_single(x, y)
 
 
-# %% [markdown]
-# ### Functions for Monte Carlo Simulations
+# ## Monte Carlo Simulation Framework
 
 # %%
-# -------------------------
-# Monte Carlo experiment
-# -------------------------
 
 def one_rep(alpha, sigma, b, n, burn_in, rng):
-    mu = - alpha * sigma ** 2 /2
+    """Run single Monte Carlo replication comparing all estimators."""
+    mu = -alpha * sigma ** 2 / 2
     x, y = draw_sample(n, b, mu, sigma, burn_in, rng)
-    # --- Hill: choose k, compute alpha ---
+    
+    # Hill estimator: automatic k selection
     sel = choose_k_by_KS(x, k_min=10, k_max=min(300, len(x)-5))
-    # --- MLE ---
+    
+    # MLE estimator
     est = mle_single(x, y)
-    # --- rank-size estimator (only consistent when tail Pareto; not for lognormal model)---
+    
+    # Tail regression estimator
     treg = tail_regression_alpha(x, sel["k"])
+    
     return {
         "b_mle": est["b_hat_joint"],
         "mu_mle": est["mu_hat_joint"],
@@ -561,11 +556,9 @@ def summarize_results(results):
 
 
 
-# %% [markdown]
-# ### Simulation
+# ## Run Simulation
 
 # %%
-# Run it
 t0 = time.perf_counter()
 res = run_simulation(alpha_list, sigma_list, b_list, n, burn_in, R, seed)
 table = summarize_results(res)
@@ -573,13 +566,9 @@ t1 = time.perf_counter()
 print(f"Runtime: {t1 - t0:.3f} seconds")
 
 
-# %% [markdown]
-# ### Tables
+# ## Results Tables
 
 # %%
-# -------------------------
-# Output: Tables
-# -------------------------
 
 print(f"Monte Carlo summary (n={n}, R={R}, burn_in={burn_in})")
 prefixes = ["b_mle", "mu_mle", "sig_mle", "alpha_mle", "alpha_hill", "alpha_treg", "k_star"]
@@ -595,13 +584,9 @@ for tab in sorted(table, key=lambda r: (r["alpha"], r["b"], r["sigma"])):
         ))
     
 
-# %% [markdown]
-# ### Charts
+# ## Visualizations
 
 # %%
-# -------------------------
-# Visualizations
-# -------------------------
 
 def visualize_results(results):
     # Collect all estimates across parameter sets
@@ -690,16 +675,14 @@ def facet_hists(res, alpha_list, b_list, sigma_list, metric="alpha_hill", bins=3
     
 
 
-# %% [markdown]
-# ### $\alpha_{MLE}, k^*, \alpha_{Hill}, \alpha_{Tail}$ 
-# All histograms use the same scale across multiple parameter sets
+# ### Comparison Histograms: α_MLE, k*, α_Hill, α_Tail
+# All histograms use consistent scales across parameter sets for comparison.
 
 # %%
 visualize_results(res)
 
-# %% [markdown]
-# ### $\alpha_{MLE}, \alpha_{Hill}, \alpha_{Tail}$
-# Details
+# ### Detailed Distributions by Parameter Set
+# Faceted histograms showing estimator performance across different (α, b, σ) combinations.
 
 # %%
 facet_hists(res, alpha_list, b_list, sigma_list, metric="alpha_mle")
